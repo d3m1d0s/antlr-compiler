@@ -336,7 +336,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
 
     private void typeError(ParserRuleContext ctx, String message) {
         int line = ctx.getStart().getLine();
-        int pos = ctx;
+        int pos = ctx.getStart().getCharPositionInLine();
         errors.add(line + ", " + pos + ": " + message);
     }
 

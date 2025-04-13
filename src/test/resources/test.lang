@@ -3,12 +3,12 @@ float b;
 bool c;
 string s;
 
-a = 3.14;         // ❌ float → int (запрещено)
-b = "hello";      // ❌ string → float (нельзя)
-c = 42;           // ❌ int → bool (нельзя)
-s = true;         // ❌ bool → string (нельзя)
+a = 3.14;         //
+b = "hello";      //
+c = 42;           //
+s = true;         //
 
-a = b;            // ❌ float → int (запрещено)
+a = b;            //
 
 if (a) {
     write "Invalid if";
@@ -18,4 +18,4 @@ while ("loop") {
     write "Wrong while";
 }
 
-write a + s;      // ❌ int + string (нельзя, не конкатенация)
+write a + s;      //
