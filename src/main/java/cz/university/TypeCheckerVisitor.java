@@ -2,6 +2,7 @@ package cz.university;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.antlr.v4.runtime.ParserRuleContext;
 
 public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<SymbolTable.Type> {
 
@@ -52,7 +53,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
 
     // === Expressions ===
     @Override
-    public SymbolTable.Type visitEmptyStatement(LanguageParser.EmptyStatementContext ctx) {
+    public SymbolTable.Type visitEmptyStatement(cz.university.LanguageParser.EmptyStatementContext ctx) {
         return null;
     }
 
@@ -64,11 +65,11 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             SymbolTable.Type varType = symbolTable.getType(varName, line);
             SymbolTable.Type valueType = visit(ctx.right);
             if (valueType == null) {
-                errors.add(line + ": Right-hand side of assignment to '" + varName + "' has invalid type.");
+                typeError(ctx, "Right-hand side of assignment to '" + varName + "' has invalid type.");
                 return null;
             }
             if (!isCompatible(varType, valueType)) {
-                errors.add(line + ": Variable '" + varName + "' type is " + varType + ", but the assigned value is " + valueType + ".");
+                typeError(ctx, "Variable '" + varName + "' type is " + varType + ", but the assigned value is " + valueType + ".");
             }
             return varType;
         } catch (TypeException e) {
@@ -115,10 +116,11 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     @Override
-    public SymbolTable.Type visitAdditiveExpr(LanguageParser.AdditiveExprContext ctx) {
+    public SymbolTable.Type visitAdditiveExpr(cz.university.LanguageParser.AdditiveExprContext ctx) {
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
         int line = ctx.getStart().getLine();
+        int pos = ctx.getStart().getCharPositionInLine();
         String op = ctx.getChild(1).getText();
 
         if (left == null || right == null) return null;
@@ -127,12 +129,12 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             if (left == SymbolTable.Type.STRING && right == SymbolTable.Type.STRING) {
                 return SymbolTable.Type.STRING;
             } else {
-                errors.add(line + ": String concatenation requires both operands to be strings. Got: " + left + ", " + right);
+                typeError(ctx, "String concatenation requires both operands to be strings. Got: " + left + ", " + right);
                 return null;
             }
         }
 
-        return computeBinaryNumericType(left, right, line);
+        return computeBinaryNumericType(left, right, ctx);
     }
 
     @Override
@@ -141,15 +143,16 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
         int line = ctx.getStart().getLine();
+        int pos = ctx.getStart().getCharPositionInLine();
 
         if ("%".equals(op)) {
             if (left != SymbolTable.Type.INT || right != SymbolTable.Type.INT) {
-                errors.add(line + ": Modulo can be used only with integers.");
+                typeError(ctx, "Modulo can be used only with integers.");
             }
             return SymbolTable.Type.INT;
         }
 
-        return computeBinaryNumericType(left, right, line);
+        return computeBinaryNumericType(left, right, ctx);
     }
 
     @Override
@@ -172,7 +175,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return SymbolTable.Type.BOOL;
         }
 
-        errors.add(line + ": Invalid types for equality: " + left + ", " + right);
+        typeError(ctx, "Invalid types for equality: " + left + ", " + right);
         return null;
     }
 
@@ -191,12 +194,12 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return SymbolTable.Type.BOOL;
         }
 
-        errors.add(line + ": Relational operators are only valid for int or float. Got: " + left + ", " + right);
+        typeError(ctx, "Relational operators are only valid for int or float. Got: " + left + ", " + right);
         return null;
     }
 
     @Override
-    public SymbolTable.Type visitReadStatement(LanguageParser.ReadStatementContext ctx) {
+    public SymbolTable.Type visitReadStatement(cz.university.LanguageParser.ReadStatementContext ctx) {
         for (var id : ctx.identifierList().IDENTIFIER()) {
             String name = id.getText();
             int line = id.getSymbol().getLine();
@@ -207,7 +210,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
                         varType != SymbolTable.Type.FLOAT &&
                         varType != SymbolTable.Type.BOOL &&
                         varType != SymbolTable.Type.STRING) {
-                    errors.add(line + ": Variable '" + name + "' has unsupported type for read: " + varType);
+                    typeError(ctx, "Variable '" + name + "' has unsupported type for read: " + varType);
                 }
             } catch (TypeException e) {
                 errors.add(e.getMessage());
@@ -230,7 +233,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type conditionType = visit(ctx.expr());
         int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
-            errors.add(line + ": Condition in if statement must be bool, got " + conditionType + ".");
+            typeError(ctx, "Condition in if statement must be bool, got " + conditionType + ".");
         }
         visit(ctx.statement(0)); // if-branch
         if (ctx.statement().size() > 1) {
@@ -244,7 +247,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type conditionType = visit(ctx.expr());
         int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
-            errors.add(line + ": Condition in while loop must be bool, got " + conditionType + ".");
+            typeError(ctx, "Condition in while loop must be bool, got " + conditionType + ".");
         }
         visit(ctx.statement());
         return null;
@@ -259,40 +262,40 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     @Override
-    public SymbolTable.Type visitAndExpr(LanguageParser.AndExprContext ctx) {
-        return visitLogicalBinary(ctx.expr(0), ctx.expr(1), ctx.getStart().getLine(), "&&");
+    public SymbolTable.Type visitAndExpr(cz.university.LanguageParser.AndExprContext ctx) {
+        return visitLogicalBinary(ctx.expr(0), ctx.expr(1), ctx,"&&");
     }
 
     @Override
-    public SymbolTable.Type visitOrExpr(LanguageParser.OrExprContext ctx) {
-        return visitLogicalBinary(ctx.expr(0), ctx.expr(1), ctx.getStart().getLine(), "||");
+    public SymbolTable.Type visitOrExpr(cz.university.LanguageParser.OrExprContext ctx) {
+        return visitLogicalBinary(ctx.expr(0), ctx.expr(1), ctx, "||");
     }
 
-    private SymbolTable.Type visitLogicalBinary(LanguageParser.ExprContext leftExpr, LanguageParser.ExprContext rightExpr, int line, String op) {
+    private SymbolTable.Type visitLogicalBinary(cz.university.LanguageParser.ExprContext leftExpr, cz.university.LanguageParser.ExprContext rightExpr, ParserRuleContext ctx, String op) {
         SymbolTable.Type left = visit(leftExpr);
         SymbolTable.Type right = visit(rightExpr);
 
         if (left == SymbolTable.Type.BOOL && right == SymbolTable.Type.BOOL) {
             return SymbolTable.Type.BOOL;
         }
-        errors.add(line + ": Logical operator '" + op + "' requires bool operands. Got: " + left + ", " + right);
+        typeError(ctx, "Logical operator '" + op + "' requires bool operands. Got: " + left + ", " + right);
         return null;
     }
 
     @Override
-    public SymbolTable.Type visitNotExpr(LanguageParser.NotExprContext ctx) {
+    public SymbolTable.Type visitNotExpr(cz.university.LanguageParser.NotExprContext ctx) {
         SymbolTable.Type type = visit(ctx.expr());
         int line = ctx.getStart().getLine();
 
         if (type == SymbolTable.Type.BOOL) {
             return SymbolTable.Type.BOOL;
         }
-        errors.add(line + ": Logical '!' requires bool operand. Got: " + type);
+        typeError(ctx, "Logical '!' requires bool operand. Got: " + type);
         return null;
     }
 
     @Override
-    public SymbolTable.Type visitUnaryMinusExpr(LanguageParser.UnaryMinusExprContext ctx) {
+    public SymbolTable.Type visitUnaryMinusExpr(cz.university.LanguageParser.UnaryMinusExprContext ctx) {
         SymbolTable.Type type = visit(ctx.expr());
         int line = ctx.getStart().getLine();
 
@@ -300,14 +303,14 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return type;
         }
 
-        errors.add(line + ": Unary minus requires int or float. Got: " + type);
+        typeError(ctx, "Unary minus requires int or float. Got: " + type);
         return null;
     }
 
 
     // === Helpers ===
 
-    private SymbolTable.Type computeBinaryNumericType(SymbolTable.Type left, SymbolTable.Type right, int line) {
+    private SymbolTable.Type computeBinaryNumericType(SymbolTable.Type left, SymbolTable.Type right,  ParserRuleContext ctx) {
         if (left == null || right == null) return null;
         if (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) {
             return SymbolTable.Type.FLOAT;
@@ -315,7 +318,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (left == SymbolTable.Type.INT && right == SymbolTable.Type.INT) {
             return SymbolTable.Type.INT;
         }
-        errors.add(line + ": Invalid operands for arithmetic operation: " + left + ", " + right);
+        typeError(ctx, "Invalid operands for arithmetic operation: " + left + ", " + right);
         return null;
     }
 
@@ -330,6 +333,13 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (keyword.equals("string")) return SymbolTable.Type.STRING;
         throw new RuntimeException("Unknown type: " + keyword);
     }
+
+    private void typeError(ParserRuleContext ctx, String message) {
+        int line = ctx.getStart().getLine();
+        int pos = ctx;
+        errors.add(line + ", " + pos + ": " + message);
+    }
+
 }
 
 
