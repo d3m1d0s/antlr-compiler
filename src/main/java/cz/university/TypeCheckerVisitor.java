@@ -3,6 +3,7 @@ package cz.university;
 import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 
 public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<SymbolTable.Type> {
 
@@ -65,11 +66,13 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             SymbolTable.Type varType = symbolTable.getType(varName, line);
             SymbolTable.Type valueType = visit(ctx.right);
             if (valueType == null) {
-                typeError(ctx, "Right-hand side of assignment to '" + varName + "' has invalid type.");
+                Token opToken = (Token) ctx.getChild(1).getPayload();
+                typeError(opToken, "Right-hand side of assignment to '" + varName + "' has invalid type.");
                 return null;
             }
             if (!isCompatible(varType, valueType)) {
-                typeError(ctx, "Variable '" + varName + "' type is " + varType + ", but the assigned value is " + valueType + ".");
+                Token opToken = (Token) ctx.getChild(1).getPayload();
+                typeError(opToken, "Variable '" + varName + "' type is " + varType + ", but the assigned value is " + valueType + ".");
             }
             return varType;
         } catch (TypeException e) {
@@ -129,7 +132,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             if (left == SymbolTable.Type.STRING && right == SymbolTable.Type.STRING) {
                 return SymbolTable.Type.STRING;
             } else {
-                typeError(ctx, "String concatenation requires both operands to be strings. Got: " + left + ", " + right);
+                Token opToken = (Token) ctx.getChild(1).getPayload();
+                typeError(opToken, "String concatenation requires both operands to be strings. Got: " + left + ", " + right);
                 return null;
             }
         }
@@ -147,7 +151,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
 
         if ("%".equals(op)) {
             if (left != SymbolTable.Type.INT || right != SymbolTable.Type.INT) {
-                typeError(ctx, "Modulo can be used only with integers.");
+                Token opToken = (Token) ctx.getChild(1).getPayload();
+                typeError(opToken, "Modulo can be used only with integers.");
             }
             return SymbolTable.Type.INT;
         }
@@ -175,7 +180,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return SymbolTable.Type.BOOL;
         }
 
-        typeError(ctx, "Invalid types for equality: " + left + ", " + right);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Invalid types for equality: " + left + ", " + right);
         return null;
     }
 
@@ -194,7 +200,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return SymbolTable.Type.BOOL;
         }
 
-        typeError(ctx, "Relational operators are only valid for int or float. Got: " + left + ", " + right);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Relational operators are only valid for int or float. Got: " + left + ", " + right);
         return null;
     }
 
@@ -210,7 +217,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
                         varType != SymbolTable.Type.FLOAT &&
                         varType != SymbolTable.Type.BOOL &&
                         varType != SymbolTable.Type.STRING) {
-                    typeError(ctx, "Variable '" + name + "' has unsupported type for read: " + varType);
+                    Token opToken = (Token) ctx.getChild(1).getPayload();
+                    typeError(opToken, "Variable '" + name + "' has unsupported type for read: " + varType);
                 }
             } catch (TypeException e) {
                 errors.add(e.getMessage());
@@ -233,7 +241,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type conditionType = visit(ctx.expr());
         int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
-            typeError(ctx, "Condition in if statement must be bool, got " + conditionType + ".");
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Condition in if statement must be bool, got " + conditionType + ".");
         }
         visit(ctx.statement(0)); // if-branch
         if (ctx.statement().size() > 1) {
@@ -247,7 +256,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type conditionType = visit(ctx.expr());
         int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
-            typeError(ctx, "Condition in while loop must be bool, got " + conditionType + ".");
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Condition in while loop must be bool, got " + conditionType + ".");
         }
         visit(ctx.statement());
         return null;
@@ -278,7 +288,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (left == SymbolTable.Type.BOOL && right == SymbolTable.Type.BOOL) {
             return SymbolTable.Type.BOOL;
         }
-        typeError(ctx, "Logical operator '" + op + "' requires bool operands. Got: " + left + ", " + right);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Logical operator '" + op + "' requires bool operands. Got: " + left + ", " + right);
         return null;
     }
 
@@ -290,7 +301,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (type == SymbolTable.Type.BOOL) {
             return SymbolTable.Type.BOOL;
         }
-        typeError(ctx, "Logical '!' requires bool operand. Got: " + type);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Logical '!' requires bool operand. Got: " + type);
         return null;
     }
 
@@ -303,7 +315,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
             return type;
         }
 
-        typeError(ctx, "Unary minus requires int or float. Got: " + type);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Unary minus requires int or float. Got: " + type);
         return null;
     }
 
@@ -318,7 +331,8 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (left == SymbolTable.Type.INT && right == SymbolTable.Type.INT) {
             return SymbolTable.Type.INT;
         }
-        typeError(ctx, "Invalid operands for arithmetic operation: " + left + ", " + right);
+        Token opToken = (Token) ctx.getChild(1).getPayload();
+        typeError(opToken, "Invalid operands for arithmetic operation: " + left + ", " + right);
         return null;
     }
 
@@ -334,10 +348,10 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         throw new RuntimeException("Unknown type: " + keyword);
     }
 
-    private void typeError(ParserRuleContext ctx, String message) {
-        int line = ctx.getStart().getLine();
-        int pos = ctx.getStart().getCharPositionInLine();
-        errors.add(line + ", " + pos + ": " + message);
+    private void typeError(Token token, String message) {
+        int line = token.getLine();
+        int pos = token.getCharPositionInLine();
+        errors.add(line + "," + pos + ": " + message);
     }
 
 }
