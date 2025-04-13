@@ -21,6 +21,18 @@ public class App {
         parser.addErrorListener(new VerboseListener());
 
         ParseTree tree = parser.program(); // start rule
+
+        TypeCheckerVisitor checker = new TypeCheckerVisitor();
+        checker.visit(tree);
+
+        //System.out.println(checker.getSymbolTableDebug());
+
+        if (!checker.getErrors().isEmpty()) {
+            checker.getErrors().forEach(System.out::println);
+            System.out.println("Aborted due to type errors.");
+            return;
+        }
+
         System.out.println(tree.toStringTree(parser));
         System.out.println("FINISH: " + file);
     }

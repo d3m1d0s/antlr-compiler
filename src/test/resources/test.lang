@@ -1,2 +1,5 @@
-int x;
-x = (5 + ) 2;
+int a;
+a = 1;
+if (a) {
+    write a;
+}
