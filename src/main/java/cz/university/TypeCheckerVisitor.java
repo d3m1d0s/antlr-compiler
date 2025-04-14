@@ -32,6 +32,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type declaredType = getTypeFromKeyword(ctx.primitiveType().getText());
         for (var id : ctx.variableList().IDENTIFIER()) {
             String name = id.getText();
+            //TODO: add pos
             int line = id.getSymbol().getLine();
             try {
                 symbolTable.declare(name, declaredType, line);
@@ -61,6 +62,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
         String varName = ctx.left.getText();
+        //TODO: add pos
         int line = ctx.getStart().getLine();
         try {
             SymbolTable.Type varType = symbolTable.getType(varName, line);
@@ -86,6 +88,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         String name = ctx.IDENTIFIER().getText();
         int line = ctx.getStart().getLine();
         try {
+            //TODO: add pos
             return symbolTable.getType(name, line);
         } catch (TypeException e) {
             errors.add(e.getMessage());
@@ -319,6 +322,26 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         typeError(opToken, "Unary minus requires int or float. Got: " + type);
         return null;
     }
+
+    @Override
+    public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
+        // for (expr0; expr1; expr2) statement
+
+        visit(ctx.expr(0));
+
+        SymbolTable.Type conditionType = visit(ctx.expr(1));
+        if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Condition in for loop must be bool, got " + conditionType + ".");
+        }
+
+        visit(ctx.expr(2));
+
+        visit(ctx.statement());
+
+        return null;
+    }
+
 
 
     // === Helpers ===

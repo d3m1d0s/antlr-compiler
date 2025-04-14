@@ -1,21 +1,3 @@
-int a;
-float b;
-bool c;
-string s;
-
-a = 3.14;         //
-b = "hello";      //
-c = 42;           //
-s = true;         //
-
-a = b;            //
-
-if (a) {
-    write "Invalid if";
+for (i = 0; 42; i = i + 1) {
+    write i;
 }
-
-while ("loop") {
-    write "Wrong while";
-}
-
-write a + s;      //

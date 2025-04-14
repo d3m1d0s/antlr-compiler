@@ -11,6 +11,7 @@ statement
     | '{' statement* '}'                                 # block
     | 'if' '(' expr ')' statement ('else' statement)?    # ifStatement
     | 'while' '(' expr ')' statement                     # whileStatement
+    | 'for' '(' expr ';' expr ';' expr ')' statement     # forStatement
     ;
 
 expr
