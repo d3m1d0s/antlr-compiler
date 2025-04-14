@@ -125,8 +125,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     public SymbolTable.Type visitAdditiveExpr(cz.university.LanguageParser.AdditiveExprContext ctx) {
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
-        int line = ctx.getStart().getLine();
-        int pos = ctx.getStart().getCharPositionInLine();
         String op = ctx.getChild(1).getText();
 
         if (left == null || right == null) return null;
@@ -149,8 +147,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         String op = ctx.getChild(1).getText();
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
-        int line = ctx.getStart().getLine();
-        int pos = ctx.getStart().getCharPositionInLine();
 
         if ("%".equals(op)) {
             if (left != SymbolTable.Type.INT || right != SymbolTable.Type.INT) {
@@ -167,7 +163,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     public SymbolTable.Type visitEqualityExpr(cz.university.LanguageParser.EqualityExprContext ctx) {
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
-        int line = ctx.getStart().getLine();
 
         if (left == null || right == null) return null;
 
@@ -193,7 +188,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     public SymbolTable.Type visitRelationalExpr(cz.university.LanguageParser.RelationalExprContext ctx) {
         SymbolTable.Type left = visit(ctx.expr(0));
         SymbolTable.Type right = visit(ctx.expr(1));
-        int line = ctx.getStart().getLine();
 
         if (left == null || right == null) return null;
 
@@ -212,10 +206,10 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     public SymbolTable.Type visitReadStatement(cz.university.LanguageParser.ReadStatementContext ctx) {
         for (var id : ctx.identifierList().IDENTIFIER()) {
             String name = id.getText();
+            //TODO: add pos
             int line = id.getSymbol().getLine();
             try {
                 SymbolTable.Type varType = symbolTable.getType(name, line);
-                // Тут можно проверить, что тип допустим
                 if (varType != SymbolTable.Type.INT &&
                         varType != SymbolTable.Type.FLOAT &&
                         varType != SymbolTable.Type.BOOL &&
@@ -242,7 +236,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitIfStatement(cz.university.LanguageParser.IfStatementContext ctx) {
         SymbolTable.Type conditionType = visit(ctx.expr());
-        int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
             Token opToken = (Token) ctx.getChild(1).getPayload();
             typeError(opToken, "Condition in if statement must be bool, got " + conditionType + ".");
@@ -257,7 +250,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitWhileStatement(cz.university.LanguageParser.WhileStatementContext ctx) {
         SymbolTable.Type conditionType = visit(ctx.expr());
-        int line = ctx.getStart().getLine();
         if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
             Token opToken = (Token) ctx.getChild(1).getPayload();
             typeError(opToken, "Condition in while loop must be bool, got " + conditionType + ".");
@@ -299,7 +291,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitNotExpr(cz.university.LanguageParser.NotExprContext ctx) {
         SymbolTable.Type type = visit(ctx.expr());
-        int line = ctx.getStart().getLine();
 
         if (type == SymbolTable.Type.BOOL) {
             return SymbolTable.Type.BOOL;
@@ -312,7 +303,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitUnaryMinusExpr(cz.university.LanguageParser.UnaryMinusExprContext ctx) {
         SymbolTable.Type type = visit(ctx.expr());
-        int line = ctx.getStart().getLine();
 
         if (type == SymbolTable.Type.INT || type == SymbolTable.Type.FLOAT) {
             return type;
