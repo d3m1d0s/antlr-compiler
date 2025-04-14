@@ -13,9 +13,9 @@ public class App {
         System.out.println("START: " + file);
 
         CharStream input = CharStreams.fromFileName(DIR + file);
-        LanguageLexer lexer = new LanguageLexer(input);
+        cz.university.LanguageLexer lexer = new cz.university.LanguageLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
-        LanguageParser parser = new LanguageParser(tokens);
+        cz.university.LanguageParser parser = new cz.university.LanguageParser(tokens);
 
         parser.removeErrorListeners();
         parser.addErrorListener(new VerboseListener());
