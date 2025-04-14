@@ -14,17 +14,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         return errors;
     }
 
-    public String getSymbolTableDebug() {
-        StringBuilder sb = new StringBuilder();
-        for (var entry : symbolTable.getTable().entrySet()) {
-            var name = entry.getKey();
-            var info = entry.getValue();
-            sb.append(name).append(" : ").append(info.type)
-                    .append(" = ").append(info.value).append("\n");
-        }
-        return sb.toString();
-    }
-
     // === Statements ===
 
     @Override
@@ -32,15 +21,9 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         SymbolTable.Type declaredType = getTypeFromKeyword(ctx.primitiveType().getText());
         for (var id : ctx.variableList().IDENTIFIER()) {
             String name = id.getText();
-            //TODO: add pos
             int line = id.getSymbol().getLine();
             try {
                 symbolTable.declare(name, declaredType, line);
-                /*
-                System.out.println("Declared: " + name + " of type " + declaredType +
-                        " with initial value: " + symbolTable.getValue(name, line));
-                */
-
             } catch (TypeException e) {
                 errors.add(e.getMessage());
             }
@@ -62,7 +45,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
         String varName = ctx.left.getText();
-        //TODO: add pos
         int line = ctx.getStart().getLine();
         try {
             SymbolTable.Type varType = symbolTable.getType(varName, line);
@@ -88,7 +70,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         String name = ctx.IDENTIFIER().getText();
         int line = ctx.getStart().getLine();
         try {
-            //TODO: add pos
             return symbolTable.getType(name, line);
         } catch (TypeException e) {
             errors.add(e.getMessage());
@@ -206,7 +187,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     public SymbolTable.Type visitReadStatement(cz.university.LanguageParser.ReadStatementContext ctx) {
         for (var id : ctx.identifierList().IDENTIFIER()) {
             String name = id.getText();
-            //TODO: add pos
             int line = id.getSymbol().getLine();
             try {
                 SymbolTable.Type varType = symbolTable.getType(name, line);
