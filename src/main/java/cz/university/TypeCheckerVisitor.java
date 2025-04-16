@@ -66,6 +66,30 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     @Override
+    public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
+        SymbolTable.Type leftType = visit(ctx.left);
+        SymbolTable.Type rightType = visit(ctx.right);
+
+        if (leftType != SymbolTable.Type.FILE) {
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Left side of '<<' must be of type FILE.");
+            return null;
+        }
+
+        if (rightType != SymbolTable.Type.INT &&
+                rightType != SymbolTable.Type.FLOAT &&
+                rightType != SymbolTable.Type.STRING) {
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Right side of '<<' must be INT, FLOAT or STRING. Got: " + rightType);
+            return null;
+        }
+
+        // can be this:
+        // (fname << 5) << "abc"
+        return SymbolTable.Type.FILE;
+    }
+
+    @Override
     public SymbolTable.Type visitIdExpr(cz.university.LanguageParser.IdExprContext ctx) {
         String name = ctx.IDENTIFIER().getText();
         int line = ctx.getStart().getLine();
@@ -293,30 +317,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         return null;
     }
 
-    @Override
-    public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
-        SymbolTable.Type leftType = visit(ctx.left);
-        SymbolTable.Type rightType = visit(ctx.right);
-
-        if (leftType != SymbolTable.Type.FILE) {
-            Token opToken = (Token) ctx.getChild(1).getPayload();
-            typeError(opToken, "Left side of '<<' must be of type FILE.");
-            return null;
-        }
-
-        if (rightType != SymbolTable.Type.INT &&
-                rightType != SymbolTable.Type.FLOAT &&
-                rightType != SymbolTable.Type.STRING) {
-            Token opToken = (Token) ctx.getChild(1).getPayload();
-            typeError(opToken, "Right side of '<<' must be INT, FLOAT or STRING. Got: " + rightType);
-            return null;
-        }
-
-        // can be this:
-        // (fname << 5) << "abc"
-        return SymbolTable.Type.FILE;
-    }
-
 
     @Override
     public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
@@ -372,6 +372,11 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         int pos = token.getCharPositionInLine();
         errors.add(line + "," + pos + ": " + message);
     }
+
+    public SymbolTable getSymbolTable() {
+        return symbolTable;
+    }
+
 
 }
 

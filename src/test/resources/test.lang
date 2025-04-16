@@ -1,2 +1,2 @@
 file f;
-f << 42 << "some text";
+f << 42 << "some text" << "" <<  << 1;

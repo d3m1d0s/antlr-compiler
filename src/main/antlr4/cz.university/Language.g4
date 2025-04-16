@@ -33,7 +33,7 @@ expr
     | '(' expr ')'                                       # parenExpr
     ;
 
-primitiveType: 'int' | 'float' | 'bool' | 'string' | 'file';
+primitiveType:  INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
 
 variableList: IDENTIFIER (',' IDENTIFIER)*;
 
@@ -42,8 +42,13 @@ identifierList: IDENTIFIER (',' IDENTIFIER)*;
 exprList: expr (',' expr)*;
 
 // === LEXER ===
-BOOL: 'true' | 'false';
+INT_T: 'int';
+FLOAT_T: 'float';
+BOOL_T: 'bool';
+STRING_T: 'string';
+FILE_T: 'file';
 
+BOOL: 'true' | 'false';
 INT: [0-9]+;
 FLOAT: [0-9]+ '.' [0-9]+;
 STRING: '"' (~["\\] | '\\' .)*? '"';

@@ -34,6 +34,14 @@ public class App {
         }
 
         System.out.println(tree.toStringTree(parser));
+
+        CodeGeneratorVisitor generator = new CodeGeneratorVisitor(checker.getSymbolTable());
+        generator.visit(tree);
+
+        // === Save to file ===
+        generator.saveToFile("output.out");
+
+        System.out.println("Code successfully generated to output.out");
         System.out.println("FINISH: " + file);
     }
 }
