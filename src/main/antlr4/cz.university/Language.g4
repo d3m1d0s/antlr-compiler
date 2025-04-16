@@ -16,6 +16,7 @@ statement
 
 expr
     : left=expr '=' right=expr                           # assignExpr
+    | left=expr '<<' right=expr                          # fileAppendExpr
     | expr '||' expr                                     # orExpr
     | expr '&&' expr                                     # andExpr
     | expr ( '==' | '!=' ) expr                          # equalityExpr
@@ -32,7 +33,7 @@ expr
     | '(' expr ')'                                       # parenExpr
     ;
 
-primitiveType: 'int' | 'float' | 'bool' | 'string';
+primitiveType: 'int' | 'float' | 'bool' | 'string' | 'file';
 
 variableList: IDENTIFIER (',' IDENTIFIER)*;
 

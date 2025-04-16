@@ -294,6 +294,31 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     @Override
+    public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
+        SymbolTable.Type leftType = visit(ctx.left);
+        SymbolTable.Type rightType = visit(ctx.right);
+
+        if (leftType != SymbolTable.Type.FILE) {
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Left side of '<<' must be of type FILE.");
+            return null;
+        }
+
+        if (rightType != SymbolTable.Type.INT &&
+                rightType != SymbolTable.Type.FLOAT &&
+                rightType != SymbolTable.Type.STRING) {
+            Token opToken = (Token) ctx.getChild(1).getPayload();
+            typeError(opToken, "Right side of '<<' must be INT, FLOAT or STRING. Got: " + rightType);
+            return null;
+        }
+
+        // can be this:
+        // (fname << 5) << "abc"
+        return SymbolTable.Type.FILE;
+    }
+
+
+    @Override
     public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
         // for (expr0; expr1; expr2) statement
 
@@ -338,6 +363,7 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         if (keyword.equals("float")) return SymbolTable.Type.FLOAT;
         if (keyword.equals("bool")) return SymbolTable.Type.BOOL;
         if (keyword.equals("string")) return SymbolTable.Type.STRING;
+        if (keyword.equals(("file"))) return SymbolTable.Type.FILE;
         throw new RuntimeException("Unknown type: " + keyword);
     }
 

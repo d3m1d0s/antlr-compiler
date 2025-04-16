@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SymbolTable {
-    public enum Type { INT, FLOAT, BOOL, STRING }
+    public enum Type { INT, FLOAT, BOOL, STRING, FILE }
 
     public static class VariableInfo {
         public final Type type;
@@ -21,6 +21,7 @@ public class SymbolTable {
                 case FLOAT -> 0.0;
                 case BOOL -> false;
                 case STRING -> "";
+                case FILE -> null;
             };
         }
     }
