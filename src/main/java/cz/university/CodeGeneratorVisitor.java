@@ -12,6 +12,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     private final SymbolTable symbolTable;
     private final List<Instruction> instructions = new ArrayList<>();
+    private boolean suppressLoad = false;
 
     public CodeGeneratorVisitor(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -78,6 +79,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                 case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
                 case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
             }
+            return varType;
         } catch (TypeException e) {
             // silent
         }
@@ -119,8 +121,87 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
             return type;
         } catch (TypeException e) {
+            e.printStackTrace();
             return null;
         }
+    }
+
+
+    @Override
+    public SymbolTable.Type visitAdditiveExpr(cz.university.LanguageParser.AdditiveExprContext ctx) {
+        SymbolTable.Type left = null;
+        SymbolTable.Type right = null;
+        String op = ctx.getChild(1).getText();
+
+        try {
+            left = visit(ctx.expr(0));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            right = visit(ctx.expr(1));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (left == null || right == null) {
+            System.err.println("❗❗ ADDITIVE: NULL OPERAND ❗❗");
+            return null;
+        }
+
+        if (".".equals(op)) {
+            instructions.add(new Instruction(Instruction.OpCode.CONCAT));
+            return SymbolTable.Type.STRING;
+        }
+
+        if (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) {
+            if (left == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
+            if (right == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
+            instructions.add(new Instruction(op.equals("+") ? Instruction.OpCode.ADD_F : Instruction.OpCode.SUB_F));
+            return SymbolTable.Type.FLOAT;
+        }
+
+        instructions.add(new Instruction(op.equals("+") ? Instruction.OpCode.ADD_I : Instruction.OpCode.SUB_I));
+        return SymbolTable.Type.INT;
+    }
+
+
+
+    @Override
+    public SymbolTable.Type visitMultiplicativeExpr(cz.university.LanguageParser.MultiplicativeExprContext ctx) {
+        SymbolTable.Type left = null;
+        SymbolTable.Type right = null;
+        String op = ctx.getChild(1).getText();
+
+        try {
+            left = visit(ctx.expr(0));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            right = visit(ctx.expr(1));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (left == null || right == null) return null;
+
+        if ("%".equals(op)) {
+            instructions.add(new Instruction(Instruction.OpCode.MOD));
+            return SymbolTable.Type.INT;
+        }
+
+        if (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) {
+            if (left == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
+            if (right == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
+            instructions.add(new Instruction(op.equals("*") ? Instruction.OpCode.MUL_F : Instruction.OpCode.DIV_F));
+            return SymbolTable.Type.FLOAT;
+        }
+
+        instructions.add(new Instruction(op.equals("*") ? Instruction.OpCode.MUL_I : Instruction.OpCode.DIV_I));
+        return SymbolTable.Type.INT;
     }
 
     public void saveToFile(String filename) {
