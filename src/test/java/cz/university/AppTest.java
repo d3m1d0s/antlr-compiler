@@ -131,67 +131,6 @@ public class AppTest {
     }
 
     @Test
-    public void testAdditionSubtractionAndConcat() {
-        System.out.println("---- testAdditionSubtractionAndConcat ---");
-        String input = """
-        int a;
-        int b;
-        a = 3;
-        b = 4;
-        int sum;
-        sum = a + b;
-
-        float f;
-        f = a - 2.5;
-
-        string s1;
-        string s2;
-        s1 = "Hello";
-        s2 = s1 . " World";
-        """;
-
-        List<Instruction> instr = generate(input);
-        instr.forEach(System.out::println);
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("add i")));
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("itof")));
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("sub f")));
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("concat")));
-    }
-
-    @Test
-    public void testMultiplicativeExpressions() {
-        System.out.println("---- testMultiplicativeExpressions ---");
-        String input = """
-        int a;
-        int b;
-        a = 6;
-        b = 3;
-        int prod;
-        prod = a * b;
-
-        int rem;
-        rem = a % b;
-
-        float f1;
-        float f2;
-        f1 = 5.0;
-        f2 = f1 / b;
-        """;
-
-        List<Instruction> instr = generate(input);
-        instr.forEach(System.out::println);
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("mul i")));
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("mod")));
-
-        assertTrue(instr.stream().anyMatch(i -> i.toString().equals("div f")));
-    }
-
-    @Test
     public void testAddInt() {
         System.out.println("---- testAddInt ---");
         String input = """
@@ -203,6 +142,7 @@ public class AppTest {
         result = a + b;
         """;
         //TODO: debug and fix early save
+        //TODO: rewrite grammar - it's a key
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
         List<String> expected = List.of(

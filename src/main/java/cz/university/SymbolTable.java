@@ -63,6 +63,10 @@ public class SymbolTable {
         info.value = value;
     }
 
+    public void define(String name, Type type) {
+        table.put(name, new VariableInfo(type));
+    }
+
     public boolean contains(String name) {
         return table.containsKey(name);
     }

@@ -1,6 +1,7 @@
 package cz.university;
 
 import cz.university.codegen.Instruction;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,7 +13,8 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     private final SymbolTable symbolTable;
     private final List<Instruction> instructions = new ArrayList<>();
-    private boolean suppressLoad = false;
+    private boolean insideExpressionStatement = false;
+
 
     public CodeGeneratorVisitor(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -22,17 +24,23 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return instructions;
     }
 
-    // === Declaration ===
     @Override
     public SymbolTable.Type visitDeclaration(cz.university.LanguageParser.DeclarationContext ctx) {
-        SymbolTable.Type declaredType = getTypeFromKeyword(ctx.primitiveType().getText());
+        String typeText = ctx.primitiveType().getText();
+        SymbolTable.Type type = switch (typeText) {
+            case "int" -> SymbolTable.Type.INT;
+            case "float" -> SymbolTable.Type.FLOAT;
+            case "bool" -> SymbolTable.Type.BOOL;
+            case "string" -> SymbolTable.Type.STRING;
+            default -> throw new RuntimeException("Unsupported type: " + typeText);
+        };
 
-        for (var id : ctx.variableList().IDENTIFIER()) {
+        for (TerminalNode id : ctx.variableList().IDENTIFIER()) {
             String name = id.getText();
+            symbolTable.define(name, type);
 
-            // we already did declare
-            // just init:
-            switch (declaredType) {
+
+            switch (type) {
                 case INT -> {
                     instructions.add(new Instruction(Instruction.OpCode.PUSH_I, "0"));
                     instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
@@ -49,44 +57,75 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                     instructions.add(new Instruction(Instruction.OpCode.PUSH_S, "\"\""));
                     instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
                 }
-                case FILE -> {
-                    System.err.println("Warning: FILE type not supported in code generation for variable '" + name + "'");
-                }
             }
         }
 
         return null;
     }
 
+    @Override
+    public SymbolTable.Type visitExpressionStatement(cz.university.LanguageParser.ExpressionStatementContext ctx) {
+        insideExpressionStatement = true;
+        SymbolTable.Type type = visit(ctx.expr());
+        insideExpressionStatement = false;
+        return type;
+    }
 
-
-    // === Assignment ===
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
         String name = ctx.left.getText();
-        int line = ctx.getStart().getLine();
+        SymbolTable.Type varType = null;
         try {
-            SymbolTable.Type varType = symbolTable.getType(name, line);
-            SymbolTable.Type valueType = visit(ctx.right);
-
-            if (varType == SymbolTable.Type.FLOAT && valueType == SymbolTable.Type.INT) {
-                instructions.add(new Instruction(Instruction.OpCode.ITOF));
-            }
-
-            switch (varType) {
-                case INT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
-                case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
-                case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
-                case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
-            }
-            return varType;
+            varType = symbolTable.getType(name, ctx.getStart().getLine());
         } catch (TypeException e) {
-            // silent
+            throw new RuntimeException(e);
         }
-        return null;
+        SymbolTable.Type exprType = visit(ctx.right);
+
+        if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        switch (varType) {
+            case FLOAT -> {
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
+                if (!insideExpressionStatement)
+                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
+            }
+            case INT -> {
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
+                if (!insideExpressionStatement)
+                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
+            }
+            case BOOL -> {
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
+                if (!insideExpressionStatement)
+                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
+            }
+            case STRING -> {
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+                if (!insideExpressionStatement)
+                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
+            }
+        }
+
+        return varType;
     }
 
-    // === Literals ===
+
+    @Override
+    public SymbolTable.Type visitIdExpr(cz.university.LanguageParser.IdExprContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        SymbolTable.Type type = null;
+        try {
+            type = symbolTable.getType(name, ctx.getStart().getLine());
+        } catch (TypeException e) {
+            throw new RuntimeException(e);
+        }
+        instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
+        return type;
+    }
+
     @Override
     public SymbolTable.Type visitIntExpr(cz.university.LanguageParser.IntExprContext ctx) {
         instructions.add(new Instruction(Instruction.OpCode.PUSH_I, ctx.getText()));
@@ -111,97 +150,39 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return SymbolTable.Type.STRING;
     }
 
-    // === Identifier ===
     @Override
-    public SymbolTable.Type visitIdExpr(cz.university.LanguageParser.IdExprContext ctx) {
-        String name = ctx.IDENTIFIER().getText();
-        int line = ctx.getStart().getLine();
-        try {
-            SymbolTable.Type type = symbolTable.getType(name, line);
-            instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
-            return type;
-        } catch (TypeException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public SymbolTable.Type visitParenExpr(cz.university.LanguageParser.ParenExprContext ctx) {
+        return visit(ctx.expr());
     }
-
 
     @Override
     public SymbolTable.Type visitAdditiveExpr(cz.university.LanguageParser.AdditiveExprContext ctx) {
-        SymbolTable.Type left = null;
-        SymbolTable.Type right = null;
-        String op = ctx.getChild(1).getText();
+        SymbolTable.Type left = visit(ctx.expr(0));
+        SymbolTable.Type right = visit(ctx.expr(1));
+        SymbolTable.Type result = (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) ? SymbolTable.Type.FLOAT : SymbolTable.Type.INT;
 
-        try {
-            left = visit(ctx.expr(0));
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (ctx.op.getText().equals("+")) {
+            instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.ADD_F : Instruction.OpCode.ADD_I));
+        } else {
+            instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.SUB_F : Instruction.OpCode.SUB_I));
         }
 
-        try {
-            right = visit(ctx.expr(1));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (left == null || right == null) {
-            System.err.println("❗❗ ADDITIVE: NULL OPERAND ❗❗");
-            return null;
-        }
-
-        if (".".equals(op)) {
-            instructions.add(new Instruction(Instruction.OpCode.CONCAT));
-            return SymbolTable.Type.STRING;
-        }
-
-        if (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) {
-            if (left == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
-            if (right == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
-            instructions.add(new Instruction(op.equals("+") ? Instruction.OpCode.ADD_F : Instruction.OpCode.SUB_F));
-            return SymbolTable.Type.FLOAT;
-        }
-
-        instructions.add(new Instruction(op.equals("+") ? Instruction.OpCode.ADD_I : Instruction.OpCode.SUB_I));
-        return SymbolTable.Type.INT;
+        return result;
     }
-
-
 
     @Override
     public SymbolTable.Type visitMultiplicativeExpr(cz.university.LanguageParser.MultiplicativeExprContext ctx) {
-        SymbolTable.Type left = null;
-        SymbolTable.Type right = null;
-        String op = ctx.getChild(1).getText();
+        SymbolTable.Type left = visit(ctx.expr(0));
+        SymbolTable.Type right = visit(ctx.expr(1));
+        SymbolTable.Type result = (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) ? SymbolTable.Type.FLOAT : SymbolTable.Type.INT;
 
-        try {
-            left = visit(ctx.expr(0));
-        } catch (Exception e) {
-            e.printStackTrace();
+        switch (ctx.op.getText()) {
+            case "*" -> instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.MUL_F : Instruction.OpCode.MUL_I));
+            case "/" -> instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.DIV_F : Instruction.OpCode.DIV_I));
+            case "%" -> instructions.add(new Instruction(Instruction.OpCode.MOD));
         }
 
-        try {
-            right = visit(ctx.expr(1));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if (left == null || right == null) return null;
-
-        if ("%".equals(op)) {
-            instructions.add(new Instruction(Instruction.OpCode.MOD));
-            return SymbolTable.Type.INT;
-        }
-
-        if (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) {
-            if (left == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
-            if (right == SymbolTable.Type.INT) instructions.add(new Instruction(Instruction.OpCode.ITOF));
-            instructions.add(new Instruction(op.equals("*") ? Instruction.OpCode.MUL_F : Instruction.OpCode.DIV_F));
-            return SymbolTable.Type.FLOAT;
-        }
-
-        instructions.add(new Instruction(op.equals("*") ? Instruction.OpCode.MUL_I : Instruction.OpCode.DIV_I));
-        return SymbolTable.Type.INT;
+        return result;
     }
 
     public void saveToFile(String filename) {
@@ -212,16 +193,5 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         } catch (IOException e) {
             System.err.println("Failed to write output file: " + e.getMessage());
         }
-    }
-
-    private SymbolTable.Type getTypeFromKeyword(String keyword) {
-        return switch (keyword) {
-            case "int" -> SymbolTable.Type.INT;
-            case "float" -> SymbolTable.Type.FLOAT;
-            case "bool" -> SymbolTable.Type.BOOL;
-            case "string" -> SymbolTable.Type.STRING;
-            case "file" -> SymbolTable.Type.FILE;
-            default -> throw new RuntimeException("Unknown type: " + keyword);
-        };
     }
 }

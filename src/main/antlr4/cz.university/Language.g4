@@ -15,22 +15,22 @@ statement
     ;
 
 expr
-    : left=expr '=' right=expr                           # assignExpr
-    | left=expr '<<' right=expr                          # fileAppendExpr
-    | expr '||' expr                                     # orExpr
-    | expr '&&' expr                                     # andExpr
-    | expr ( '==' | '!=' ) expr                          # equalityExpr
-    | expr ( '<' | '>' ) expr                            # relationalExpr
-    | expr ( '+' | '-' | '.' ) expr                      # additiveExpr
-    | expr ( '*' | '/' | '%' ) expr                      # multiplicativeExpr
-    | '!' expr                                           # notExpr
-    | '-' expr                                           # unaryMinusExpr
-    | IDENTIFIER                                         # idExpr
-    | INT                                                # intExpr
-    | FLOAT                                              # floatExpr
-    | BOOL                                               # boolExpr
-    | STRING                                             # stringExpr
-    | '(' expr ')'                                       # parenExpr
+    : left=expr op='=' right=expr                     # assignExpr
+    | left=expr op='<<' right=expr                    # fileAppendExpr
+    | expr op='||' expr                               # orExpr
+    | expr op='&&' expr                               # andExpr
+    | expr op=('==' | '!=') expr                      # equalityExpr
+    | expr op=('<' | '>') expr                        # relationalExpr
+    | expr op=('+' | '-' | '.') expr                  # additiveExpr
+    | expr op=('*' | '/' | '%') expr                  # multiplicativeExpr
+    | op='!' expr                                     # notExpr
+    | op='-' expr                                     # unaryMinusExpr
+    | IDENTIFIER                                      # idExpr
+    | INT                                             # intExpr
+    | FLOAT                                           # floatExpr
+    | BOOL                                            # boolExpr
+    | STRING                                          # stringExpr
+    | '(' expr ')'                                    # parenExpr
     ;
 
 primitiveType:  INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
