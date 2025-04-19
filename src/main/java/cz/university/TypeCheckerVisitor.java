@@ -43,21 +43,23 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     @Override
-    public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
-        String varName = ctx.left.getText();
+    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
+        String varName = ctx.IDENTIFIER().getText();
         int line = ctx.getStart().getLine();
         try {
             SymbolTable.Type varType = symbolTable.getType(varName, line);
-            SymbolTable.Type valueType = visit(ctx.right);
+            SymbolTable.Type valueType = visit(ctx.expr());
+
             if (valueType == null) {
-                Token opToken = (Token) ctx.getChild(1).getPayload();
-                typeError(opToken, "Right-hand side of assignment to '" + varName + "' has invalid type.");
+                typeError(ctx.IDENTIFIER().getSymbol(), "Right-hand side of assignment to '" + varName + "' has invalid type.");
                 return null;
             }
+
             if (!isCompatible(varType, valueType)) {
-                Token opToken = (Token) ctx.getChild(1).getPayload();
-                typeError(opToken, "Variable '" + varName + "' type is " + varType + ", but the assigned value is " + valueType + ".");
+                typeError(ctx.IDENTIFIER().getSymbol(), "Variable '" + varName + "' type is " + varType + ", but assigned value is " + valueType + ".");
+                return null;
             }
+
             return varType;
         } catch (TypeException e) {
             errors.add(e.getMessage());
@@ -65,10 +67,11 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         }
     }
 
+
     @Override
     public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
-        SymbolTable.Type leftType = visit(ctx.left);
-        SymbolTable.Type rightType = visit(ctx.right);
+        SymbolTable.Type leftType = visit(ctx.expr(0));
+        SymbolTable.Type rightType = visit(ctx.expr(1));
 
         if (leftType != SymbolTable.Type.FILE) {
             Token opToken = (Token) ctx.getChild(1).getPayload();

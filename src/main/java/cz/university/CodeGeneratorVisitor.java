@@ -72,15 +72,16 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     }
 
     @Override
-    public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
-        String name = ctx.left.getText();
-        SymbolTable.Type varType = null;
+    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
+        String name = ctx.IDENTIFIER().getText();
+        SymbolTable.Type varType;
         try {
             varType = symbolTable.getType(name, ctx.getStart().getLine());
         } catch (TypeException e) {
             throw new RuntimeException(e);
         }
-        SymbolTable.Type exprType = visit(ctx.right);
+
+        SymbolTable.Type exprType = visit(ctx.expr());
 
         if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
@@ -89,23 +90,15 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         switch (varType) {
             case FLOAT -> {
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
-                if (!insideExpressionStatement)
-                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
             }
             case INT -> {
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
-                if (!insideExpressionStatement)
-                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
             }
             case BOOL -> {
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
-                if (!insideExpressionStatement)
-                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
             }
             case STRING -> {
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
-                if (!insideExpressionStatement)
-                    instructions.add(new Instruction(Instruction.OpCode.LOAD, name));
             }
         }
 
@@ -157,33 +150,85 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitAdditiveExpr(cz.university.LanguageParser.AdditiveExprContext ctx) {
-        SymbolTable.Type left = visit(ctx.expr(0));
-        SymbolTable.Type right = visit(ctx.expr(1));
-        SymbolTable.Type result = (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) ? SymbolTable.Type.FLOAT : SymbolTable.Type.INT;
+        var leftExpr = ctx.expr(0);
+        var rightExpr = ctx.expr(1);
 
-        if (ctx.op.getText().equals("+")) {
-            instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.ADD_F : Instruction.OpCode.ADD_I));
-        } else {
-            instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.SUB_F : Instruction.OpCode.SUB_I));
+        SymbolTable.Type leftType = symbolTable.getExprType(leftExpr, ctx.getStart().getLine());
+        SymbolTable.Type rightType = symbolTable.getExprType(rightExpr, ctx.getStart().getLine());
+
+        String op = ctx.op.getText();
+        if (op.equals(".")) {
+            if (leftType != SymbolTable.Type.STRING || rightType != SymbolTable.Type.STRING) {
+                throw new RuntimeException("Both operands must be strings for '.' operator.");
+            }
+
+            visit(leftExpr);
+            visit(rightExpr);
+            instructions.add(new Instruction(Instruction.OpCode.CONCAT));
+            return SymbolTable.Type.STRING;
         }
 
-        return result;
+        SymbolTable.Type resultType = (leftType == SymbolTable.Type.FLOAT || rightType == SymbolTable.Type.FLOAT)
+                ? SymbolTable.Type.FLOAT
+                : SymbolTable.Type.INT;
+
+        SymbolTable.Type left = visit(leftExpr);
+        if (resultType == SymbolTable.Type.FLOAT && leftType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        SymbolTable.Type right = visit(rightExpr);
+        if (resultType == SymbolTable.Type.FLOAT && rightType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        instructions.add(new Instruction(
+                switch (op) {
+                    case "+" -> resultType == SymbolTable.Type.FLOAT ? Instruction.OpCode.ADD_F : Instruction.OpCode.ADD_I;
+                    case "-" -> resultType == SymbolTable.Type.FLOAT ? Instruction.OpCode.SUB_F : Instruction.OpCode.SUB_I;
+                    default -> throw new RuntimeException("Unknown op: " + op);
+                }
+        ));
+
+        return resultType;
     }
+
 
     @Override
     public SymbolTable.Type visitMultiplicativeExpr(cz.university.LanguageParser.MultiplicativeExprContext ctx) {
-        SymbolTable.Type left = visit(ctx.expr(0));
-        SymbolTable.Type right = visit(ctx.expr(1));
-        SymbolTable.Type result = (left == SymbolTable.Type.FLOAT || right == SymbolTable.Type.FLOAT) ? SymbolTable.Type.FLOAT : SymbolTable.Type.INT;
+        var leftExpr = ctx.expr(0);
+        var rightExpr = ctx.expr(1);
 
-        switch (ctx.op.getText()) {
-            case "*" -> instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.MUL_F : Instruction.OpCode.MUL_I));
-            case "/" -> instructions.add(new Instruction(result == SymbolTable.Type.FLOAT ? Instruction.OpCode.DIV_F : Instruction.OpCode.DIV_I));
-            case "%" -> instructions.add(new Instruction(Instruction.OpCode.MOD));
+        SymbolTable.Type leftType = symbolTable.getExprType(leftExpr, ctx.getStart().getLine());
+        SymbolTable.Type rightType = symbolTable.getExprType(rightExpr, ctx.getStart().getLine());
+
+        SymbolTable.Type resultType = (leftType == SymbolTable.Type.FLOAT || rightType == SymbolTable.Type.FLOAT)
+                ? SymbolTable.Type.FLOAT
+                : SymbolTable.Type.INT;
+
+        SymbolTable.Type left = visit(leftExpr);
+        if (resultType == SymbolTable.Type.FLOAT && leftType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
-        return result;
+        SymbolTable.Type right = visit(rightExpr);
+        if (resultType == SymbolTable.Type.FLOAT && rightType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        String op = ctx.op.getText();
+        instructions.add(new Instruction(
+                switch (op) {
+                    case "*" -> resultType == SymbolTable.Type.FLOAT ? Instruction.OpCode.MUL_F : Instruction.OpCode.MUL_I;
+                    case "/" -> resultType == SymbolTable.Type.FLOAT ? Instruction.OpCode.DIV_F : Instruction.OpCode.DIV_I;
+                    case "%" -> Instruction.OpCode.MOD;
+                    default -> throw new RuntimeException("Unknown op: " + op);
+                }
+        ));
+
+        return resultType;
     }
+
 
     public void saveToFile(String filename) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {

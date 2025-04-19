@@ -1,5 +1,7 @@
 package cz.university;
 
+import org.antlr.v4.runtime.ParserRuleContext;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +48,33 @@ public class SymbolTable {
         }
         return info.type;
     }
+
+    public Type getExprType(ParserRuleContext ctx, int line) {
+        if (ctx instanceof cz.university.LanguageParser.IdExprContext idCtx) {
+            String name = idCtx.IDENTIFIER().getText();
+            try {
+                return getType(name, line);
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (ctx instanceof cz.university.LanguageParser.IntExprContext) return Type.INT;
+        if (ctx instanceof cz.university.LanguageParser.FloatExprContext) return Type.FLOAT;
+        if (ctx instanceof cz.university.LanguageParser.BoolExprContext) return Type.BOOL;
+        if (ctx instanceof cz.university.LanguageParser.StringExprContext) return Type.STRING;
+        if (ctx instanceof cz.university.LanguageParser.ParenExprContext parenCtx) {
+            return getExprType(parenCtx.expr(), line);
+        }
+
+        // recursive left and right if it can be
+        try {
+            var method = ctx.getClass().getMethod("expr", int.class);
+            return getExprType((ParserRuleContext) method.invoke(ctx, 0), line);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot statically infer type of expression: " + ctx.getText(), e);
+        }
+    }
+
 
     public Object getValue(String name, int line) throws TypeException {
         VariableInfo info = table.get(name);

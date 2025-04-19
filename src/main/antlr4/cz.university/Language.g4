@@ -5,40 +5,37 @@ program: statement* EOF;
 statement
     : ';'                                                # emptyStatement
     | primitiveType variableList ';'                     # declaration
+    | IDENTIFIER '=' expr ';'                            # assignmentStatement
     | expr ';'                                           # expressionStatement
     | 'read' identifierList ';'                          # readStatement
     | 'write' exprList ';'                               # writeStatement
     | '{' statement* '}'                                 # block
     | 'if' '(' expr ')' statement ('else' statement)?    # ifStatement
     | 'while' '(' expr ')' statement                     # whileStatement
-    | 'for' '(' expr ';' expr ';' expr ')' statement     # forStatement
+    | 'for' '(' expr? ';' expr? ';' expr? ')' statement  # forStatement
     ;
 
 expr
-    : left=expr op='=' right=expr                     # assignExpr
-    | left=expr op='<<' right=expr                    # fileAppendExpr
-    | expr op='||' expr                               # orExpr
-    | expr op='&&' expr                               # andExpr
-    | expr op=('==' | '!=') expr                      # equalityExpr
-    | expr op=('<' | '>') expr                        # relationalExpr
-    | expr op=('+' | '-' | '.') expr                  # additiveExpr
-    | expr op=('*' | '/' | '%') expr                  # multiplicativeExpr
-    | op='!' expr                                     # notExpr
-    | op='-' expr                                     # unaryMinusExpr
-    | IDENTIFIER                                      # idExpr
-    | INT                                             # intExpr
-    | FLOAT                                           # floatExpr
-    | BOOL                                            # boolExpr
-    | STRING                                          # stringExpr
-    | '(' expr ')'                                    # parenExpr
+    : left=expr op='<<' right=expr                     # fileAppendExpr
+    | left=expr op='||' right=expr                     # orExpr
+    | left=expr op='&&' right=expr                     # andExpr
+    | left=expr op=('==' | '!=') right=expr            # equalityExpr
+    | left=expr op=('<' | '>') right=expr              # relationalExpr
+    | left=expr op=('+' | '-' | '.') right=expr        # additiveExpr
+    | left=expr op=('*' | '/' | '%') right=expr        # multiplicativeExpr
+    | op='!' expr                                      # notExpr
+    | op='-' expr                                      # unaryMinusExpr
+    | IDENTIFIER                                       # idExpr
+    | INT                                              # intExpr
+    | FLOAT                                            # floatExpr
+    | BOOL                                             # boolExpr
+    | STRING                                           # stringExpr
+    | '(' expr ')'                                     # parenExpr
     ;
 
-primitiveType:  INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
-
+primitiveType: INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
 variableList: IDENTIFIER (',' IDENTIFIER)*;
-
 identifierList: IDENTIFIER (',' IDENTIFIER)*;
-
 exprList: expr (',' expr)*;
 
 // === LEXER ===
@@ -52,7 +49,6 @@ BOOL: 'true' | 'false';
 INT: [0-9]+;
 FLOAT: [0-9]+ '.' [0-9]+;
 STRING: '"' (~["\\] | '\\' .)*? '"';
-
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 
 // COMMENTS AND SKIPPED

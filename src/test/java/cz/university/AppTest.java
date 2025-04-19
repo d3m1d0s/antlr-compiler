@@ -141,8 +141,6 @@ public class AppTest {
         b = 3;
         result = a + b;
         """;
-        //TODO: debug and fix early save
-        //TODO: rewrite grammar - it's a key
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
         List<String> expected = List.of(
