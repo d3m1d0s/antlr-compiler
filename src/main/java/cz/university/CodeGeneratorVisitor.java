@@ -302,6 +302,15 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return null;
     }
 
+    @Override
+    public SymbolTable.Type visitNotExpr(cz.university.LanguageParser.NotExprContext ctx) {
+        SymbolTable.Type type = visit(ctx.expr());
+        if (type == SymbolTable.Type.BOOL) {
+            instructions.add(new Instruction(Instruction.OpCode.NOT));
+            return SymbolTable.Type.BOOL;
+        }
+        return null;
+    }
 
 
 

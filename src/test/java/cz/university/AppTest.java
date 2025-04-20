@@ -61,7 +61,7 @@ public class AppTest {
 
     @Test
     public void testIntDeclarationAndAssignmentCodeGen() {
-        System.out.println("---- testIntDeclarationAndAssignmentCodeGen ---");
+        System.out.println("---- testIntDeclarationAndAssignmentCodeGen ----");
         String input = """
             int a;
             a = 42;
@@ -76,7 +76,7 @@ public class AppTest {
 
     @Test
     public void testFloatPromotionAssignmentCodeGen() {
-        System.out.println("---- testFloatPromotionAssignmentCodeGen ---");
+        System.out.println("---- testFloatPromotionAssignmentCodeGen ----");
         String input = """
             float c;
             c = 10;
@@ -92,7 +92,7 @@ public class AppTest {
 
     @Test
     public void testStringDeclarationAndAssignment() {
-        System.out.println("---- testStringDeclarationAndAssignment ---");
+        System.out.println("---- testStringDeclarationAndAssignment ----");
         String input = """
             string msg;
             msg = "hello";
@@ -105,7 +105,7 @@ public class AppTest {
 
     @Test
     public void testBoolAssignment() {
-        System.out.println("---- testBoolAssignment ---");
+        System.out.println("---- testBoolAssignment ----");
         String input = """
             bool m;
             m = true;
@@ -118,7 +118,7 @@ public class AppTest {
 
     @Test
     public void testIdentifierLoad() {
-        System.out.println("---- testIdentifierLoad ---");
+        System.out.println("---- testIdentifierLoad ----");
         String input = """
         int x;
         int y;
@@ -132,7 +132,7 @@ public class AppTest {
 
     @Test
     public void testAddInt() {
-        System.out.println("---- testAddInt ---");
+        System.out.println("---- testAddInt ----");
         String input = """
         int a;
         int b;
@@ -159,7 +159,7 @@ public class AppTest {
 
     @Test
     public void testSubFloatWithPromotion() {
-        System.out.println("---- testSubFloatWithPromotion ---");
+        System.out.println("---- testSubFloatWithPromotion ----");
         String input = """
         int a;
         float b;
@@ -187,7 +187,7 @@ public class AppTest {
 
     @Test
     public void testConcatString() {
-        System.out.println("---- testConcatString ---");
+        System.out.println("---- testConcatString ----");
         String input = """
         string s1;
         string s2;
@@ -215,7 +215,7 @@ public class AppTest {
 
     @Test
     public void testMultiplyInt() {
-        System.out.println("---- testMultiplyInt ---");
+        System.out.println("---- testMultiplyInt ----");
         String input = """
         int a;
         int b;
@@ -243,7 +243,7 @@ public class AppTest {
 
     @Test
     public void testModulo() {
-        System.out.println("---- testModulo ---");
+        System.out.println("---- testModulo ----");
         String input = """
         int a;
         int b;
@@ -271,7 +271,7 @@ public class AppTest {
 
     @Test
     public void testEqualFloatPromotion() {
-        System.out.println("---- testEqualFloatPromotion ---");
+        System.out.println("---- testEqualFloatPromotion ----");
         String input = """
         int a;
         float b;
@@ -300,7 +300,7 @@ public class AppTest {
 
     @Test
     public void testEqualStrings() {
-        System.out.println("---- testEqualStrings ---");
+        System.out.println("---- testEqualStrings ----");
         String input = """
         string a;
         string b;
@@ -329,7 +329,7 @@ public class AppTest {
 
     @Test
     public void testLessThanInt() {
-        System.out.println("---- testLessThanInt ---");
+        System.out.println("---- testLessThanInt ----");
         String input = """
         int a;
         int b;
@@ -358,7 +358,7 @@ public class AppTest {
 
     @Test
     public void testGreaterThanFloatWithPromotion() {
-        System.out.println("---- testGreaterThanFloatWithPromotion ---");
+        System.out.println("---- testGreaterThanFloatWithPromotion ----");
         String input = """
         int a;
         float b;
@@ -385,6 +385,29 @@ public class AppTest {
         }
     }
 
+    @Test
+    public void testNotBool() {
+        System.out.println("---- testNotBool ----");
+        String input = """
+        bool a;
+        bool result;
+        a = false;
+        result = !a;
+        """;
 
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push b false", "save b a",
+                "push b false", "save b result",
+                "push b false", "save b a",
+                "load a", "not", "save b result"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
 
 }
