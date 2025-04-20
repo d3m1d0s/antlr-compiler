@@ -298,5 +298,93 @@ public class AppTest {
         }
     }
 
+    @Test
+    public void testEqualStrings() {
+        System.out.println("---- testEqualStrings ---");
+        String input = """
+        string a;
+        string b;
+        bool result;
+        a = "foo";
+        b = "bar";
+        result = a == b;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push s \"\"", "save s a",
+                "push s \"\"", "save s b",
+                "push b false", "save b result",
+                "push s \"foo\"", "save s a",
+                "push s \"bar\"", "save s b",
+                "load a", "load b", "eq s", "save b result"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testLessThanInt() {
+        System.out.println("---- testLessThanInt ---");
+        String input = """
+        int a;
+        int b;
+        bool result;
+        a = 1;
+        b = 2;
+        result = a < b;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push i 0", "save i b",
+                "push b false", "save b result",
+                "push i 1", "save i a",
+                "push i 2", "save i b",
+                "load a", "load b", "lt i", "save b result"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testGreaterThanFloatWithPromotion() {
+        System.out.println("---- testGreaterThanFloatWithPromotion ---");
+        String input = """
+        int a;
+        float b;
+        bool result;
+        a = 4;
+        b = 2.5;
+        result = a > b;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push f 0.0", "save f b",
+                "push b false", "save b result",
+                "push i 4", "save i a",
+                "push f 2.5", "save f b",
+                "load a", "itof", "load b", "gt f", "save b result"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+
 
 }

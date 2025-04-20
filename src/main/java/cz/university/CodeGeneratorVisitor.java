@@ -268,6 +268,40 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return null;
     }
 
+    @Override
+    public SymbolTable.Type visitRelationalExpr(cz.university.LanguageParser.RelationalExprContext ctx) {
+        var leftExpr = ctx.expr(0);
+        var rightExpr = ctx.expr(1);
+        int line = ctx.getStart().getLine();
+        String op = ctx.getChild(1).getText();
+
+        SymbolTable.Type leftType = symbolTable.getExprType(leftExpr, line);
+        SymbolTable.Type rightType = symbolTable.getExprType(rightExpr, line);
+        boolean floatComparison = (leftType == SymbolTable.Type.FLOAT || rightType == SymbolTable.Type.FLOAT);
+
+        SymbolTable.Type left = visit(leftExpr);
+        if (floatComparison && leftType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        SymbolTable.Type right = visit(rightExpr);
+        if (floatComparison && rightType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        if (floatComparison) {
+            instructions.add(new Instruction(op.equals("<") ? Instruction.OpCode.LT_F : Instruction.OpCode.GT_F));
+            return SymbolTable.Type.BOOL;
+        }
+
+        if (leftType == SymbolTable.Type.INT && rightType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(op.equals("<") ? Instruction.OpCode.LT_I : Instruction.OpCode.GT_I));
+            return SymbolTable.Type.BOOL;
+        }
+
+        return null;
+    }
+
 
 
 
