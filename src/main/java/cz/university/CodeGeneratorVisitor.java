@@ -229,6 +229,47 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return resultType;
     }
 
+    @Override
+    public SymbolTable.Type visitEqualityExpr(cz.university.LanguageParser.EqualityExprContext ctx) {
+        var leftExpr = ctx.expr(0);
+        var rightExpr = ctx.expr(1);
+
+        int line = ctx.getStart().getLine();
+        SymbolTable.Type leftType = symbolTable.getExprType(leftExpr, line);
+        SymbolTable.Type rightType = symbolTable.getExprType(rightExpr, line);
+
+        boolean floatComparison = (leftType == SymbolTable.Type.FLOAT || rightType == SymbolTable.Type.FLOAT);
+
+        SymbolTable.Type left = visit(leftExpr);
+        if (floatComparison && leftType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        SymbolTable.Type right = visit(rightExpr);
+        if (floatComparison && rightType == SymbolTable.Type.INT) {
+            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+        }
+
+        if (floatComparison) {
+            instructions.add(new Instruction(Instruction.OpCode.EQ_F));
+            return SymbolTable.Type.BOOL;
+        }
+
+        if (leftType == rightType) {
+            switch (leftType) {
+                case INT -> instructions.add(new Instruction(Instruction.OpCode.EQ_I));
+                case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.EQ_F));
+                case STRING -> instructions.add(new Instruction(Instruction.OpCode.EQ_S));
+                default -> {}
+            }
+            return SymbolTable.Type.BOOL;
+        }
+
+        return null;
+    }
+
+
+
 
     public void saveToFile(String filename) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {

@@ -269,5 +269,34 @@ public class AppTest {
         }
     }
 
+    @Test
+    public void testEqualFloatPromotion() {
+        System.out.println("---- testEqualFloatPromotion ---");
+        String input = """
+        int a;
+        float b;
+        bool result;
+        a = 3;
+        b = 3.0;
+        result = a == b;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push f 0.0", "save f b",
+                "push b false", "save b result",
+                "push i 3", "save i a",
+                "push f 3.0", "save f b",
+                "load a", "itof", "load b", "eq f", "save b result"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
 
 }
