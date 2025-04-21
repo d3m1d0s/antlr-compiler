@@ -323,22 +323,46 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
 
     @Override
     public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
-        // for (expr0; expr1; expr2) statement
-
-        visit(ctx.expr(0));
-
-        SymbolTable.Type conditionType = visit(ctx.expr(1));
-        if (conditionType != null && conditionType != SymbolTable.Type.BOOL) {
-            Token opToken = (Token) ctx.getChild(1).getPayload();
-            typeError(opToken, "Condition in for loop must be bool, got " + conditionType + ".");
+        if (ctx.forInit() != null && ctx.forInit().getChildCount() > 0) {
+            String var = ctx.forInit().IDENTIFIER().getText();
+            SymbolTable.Type varType = null;
+            try {
+                varType = symbolTable.getType(var, ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            SymbolTable.Type valueType = visit(ctx.forInit().expr());
+            if (!isCompatible(varType, valueType)) {
+                typeError(ctx.forInit().start, "Incompatible types in for-init: " + varType + " and " + valueType);
+            }
         }
 
-        visit(ctx.expr(2));
+        if (ctx.forCond() != null && ctx.forCond().expr() != null) {
+            SymbolTable.Type condType = visit(ctx.forCond().expr());
+            if (condType != SymbolTable.Type.BOOL) {
+                typeError(ctx.forCond().start, "Condition in for loop must be bool, got " + condType);
+            }
+        }
+
+        if (ctx.forUpdate() != null && ctx.forUpdate().getChildCount() > 0) {
+            String var = ctx.forUpdate().IDENTIFIER().getText();
+            SymbolTable.Type varType = null;
+            try {
+                varType = symbolTable.getType(var, ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            SymbolTable.Type valueType = visit(ctx.forUpdate().expr());
+            if (!isCompatible(varType, valueType)) {
+                typeError(ctx.forUpdate().start, "Incompatible types in for-update: " + varType + " and " + valueType);
+            }
+        }
 
         visit(ctx.statement());
 
         return null;
     }
+
 
 
 

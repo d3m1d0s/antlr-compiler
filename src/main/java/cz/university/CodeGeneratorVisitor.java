@@ -14,6 +14,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     private final SymbolTable symbolTable;
     private final List<Instruction> instructions = new ArrayList<>();
     private boolean insideExpressionStatement = false;
+    private int labelCounter = 0;
 
 
     public CodeGeneratorVisitor(SymbolTable symbolTable) {
@@ -312,6 +313,173 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return null;
     }
 
+    @Override
+    public SymbolTable.Type visitAndExpr(cz.university.LanguageParser.AndExprContext ctx) {
+        SymbolTable.Type left = visit(ctx.expr(0));
+        SymbolTable.Type right = visit(ctx.expr(1));
+
+        if (left == SymbolTable.Type.BOOL && right == SymbolTable.Type.BOOL) {
+            instructions.add(new Instruction(Instruction.OpCode.AND));
+            return SymbolTable.Type.BOOL;
+        }
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitOrExpr(cz.university.LanguageParser.OrExprContext ctx) {
+        SymbolTable.Type left = visit(ctx.expr(0));
+        SymbolTable.Type right = visit(ctx.expr(1));
+
+        if (left == SymbolTable.Type.BOOL && right == SymbolTable.Type.BOOL) {
+            instructions.add(new Instruction(Instruction.OpCode.OR));
+            return SymbolTable.Type.BOOL;
+        }
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitWriteStatement(cz.university.LanguageParser.WriteStatementContext ctx) {
+        int count = 0;
+        for (var expr : ctx.exprList().expr()) {
+            SymbolTable.Type type = visit(expr);
+            count++;
+
+
+            switch (type) {
+                case INT -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
+                case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
+                case BOOL -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
+                case STRING -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitReadStatement(cz.university.LanguageParser.ReadStatementContext ctx) {
+        for (var id : ctx.identifierList().IDENTIFIER()) {
+            String name = id.getText();
+            int line = id.getSymbol().getLine();
+            try {
+                SymbolTable.Type varType = symbolTable.getType(name, line);
+                switch (varType) {
+                    case INT -> instructions.add(new Instruction(Instruction.OpCode.READ_I));
+                    case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.READ_F));
+                    case BOOL -> instructions.add(new Instruction(Instruction.OpCode.READ_B));
+                    case STRING -> instructions.add(new Instruction(Instruction.OpCode.READ_S));
+                }
+
+                switch (varType) {
+                    case INT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
+                    case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
+                    case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
+                    case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+                }
+            } catch (TypeException e) {
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitWhileStatement(cz.university.LanguageParser.WhileStatementContext ctx) {
+        String startLabel = nextLabel();
+        String endLabel = nextLabel();
+
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, startLabel));
+
+        SymbolTable.Type conditionType = visit(ctx.expr());
+        instructions.add(new Instruction(Instruction.OpCode.FJMP, endLabel));
+
+        visit(ctx.statement());
+
+        instructions.add(new Instruction(Instruction.OpCode.JMP, startLabel));
+
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, endLabel));
+
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitIfStatement(cz.university.LanguageParser.IfStatementContext ctx) {
+        String elseLabel = nextLabel();
+        String endLabel = nextLabel();
+
+        SymbolTable.Type conditionType = visit(ctx.expr());
+        instructions.add(new Instruction(Instruction.OpCode.FJMP, elseLabel));
+
+        visit(ctx.statement(0)); // if ...
+
+        if (ctx.statement().size() > 1) {
+            instructions.add(new Instruction(Instruction.OpCode.JMP, endLabel));
+        }
+
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, elseLabel));
+        if (ctx.statement().size() > 1) {
+            visit(ctx.statement(1)); // else ...
+            instructions.add(new Instruction(Instruction.OpCode.LABEL, endLabel));
+        }
+
+        return null;
+    }
+
+    @Override
+    public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
+        String startLabel = nextLabel();
+        String endLabel = nextLabel();
+
+        if (ctx.forInit() != null && ctx.forInit().getChildCount() > 0) {
+            String var = ctx.forInit().IDENTIFIER().getText();
+            SymbolTable.Type type = null;
+            try {
+                type = symbolTable.getType(var, ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            visit(ctx.forInit().expr());
+            addSaveInstruction(type, var);
+        }
+
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, startLabel));
+
+        if (ctx.forCond() != null && ctx.forCond().expr() != null) {
+            visit(ctx.forCond().expr());
+            instructions.add(new Instruction(Instruction.OpCode.FJMP, endLabel));
+        }
+
+        visit(ctx.statement());
+
+        if (ctx.forUpdate() != null && ctx.forUpdate().getChildCount() > 0) {
+            String var = ctx.forUpdate().IDENTIFIER().getText();
+            SymbolTable.Type type = null;
+            try {
+                type = symbolTable.getType(var, ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            visit(ctx.forUpdate().expr());
+            addSaveInstruction(type, var);
+        }
+
+        instructions.add(new Instruction(Instruction.OpCode.JMP, startLabel));
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, endLabel));
+
+        return null;
+    }
+
+    private void addSaveInstruction(SymbolTable.Type type, String name) {
+        switch (type) {
+            case INT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
+            case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
+            case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
+            case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+        }
+    }
+
+    private String nextLabel() {
+        return "L" + (labelCounter++);
+    }
 
 
     public void saveToFile(String filename) {

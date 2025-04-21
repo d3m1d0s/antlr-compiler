@@ -410,4 +410,230 @@ public class AppTest {
         }
     }
 
+    @Test
+    public void testAndBool() {
+        System.out.println("---- testAndBool ----");
+        String input = """
+        bool a;
+        bool b;
+        bool result;
+        a = true;
+        b = false;
+        result = a && b;
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+        List<String> expected = List.of(
+                "push b false",
+                "save b a",
+                "push b false",
+                "save b b",
+                "push b false",
+                "save b result",
+                "push b true",
+                "save b a",
+                "push b false",
+                "save b b",
+                "load a",
+                "load b",
+                "and",
+                "save b result"
+        );
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testOrBool() {
+        System.out.println("---- testOrBool ----");
+        String input = """
+        bool a;
+        bool b;
+        bool result;
+        a = false;
+        b = true;
+        result = a || b;
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+        List<String> expected = List.of(
+                "push b false",
+                "save b a",
+                "push b false",
+                "save b b",
+                "push b false",
+                "save b result",
+                "push b false",
+                "save b a",
+                "push b true",
+                "save b b",
+                "load a",
+                "load b",
+                "or",
+                "save b result"
+        );
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testWriteStatement() {
+        System.out.println("---- testWriteStatement ----");
+        String input = """
+        int a;
+        float b;
+        bool c;
+        string d;
+        a = 10;
+        b = 3.14;
+        c = true;
+        d = "Hi!";
+        write a, b, c, d;
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push f 0.0", "save f b",
+                "push b false", "save b c",
+                "push s \"\"", "save s d",
+
+                "push i 10", "save i a",
+                "push f 3.14", "save f b",
+                "push b true", "save b c",
+                "push s \"Hi!\"", "save s d",
+
+                "load a", "print",
+                "load b", "print",
+                "load c", "print",
+                "load d", "print"
+        );
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testReadStatement() {
+        System.out.println("---- testReadStatement ----");
+        String input = """
+        int a;
+        float b;
+        bool c;
+        string d;
+        read a, b, c, d;
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push f 0.0", "save f b",
+                "push b false", "save b c",
+                "push s \"\"", "save s d",
+
+                "read i", "save i a",
+                "read f", "save f b",
+                "read b", "save b c",
+                "read s", "save s d"
+        );
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testIfStatement() {
+        System.out.println("---- testIfStatement ----");
+        String input = """
+        bool cond;
+        int a;
+        cond = true;
+        if (cond) {
+            a = 42;
+        }
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push b false", "save b cond",
+                "push i 0", "save i a",
+
+                "push b true", "save b cond",
+
+                "load cond",
+                "fjmp L0",
+                "push i 42", "save i a",
+                "label L0"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testWhileStatement() {
+        System.out.println("---- testWhileStatement ----");
+        String input = """
+        int a;
+        a = 0;
+        while (a < 3) {
+            a = a + 1;
+        }
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+
+                "push i 0", "save i a",
+
+                "label L0",
+                "load a", "push i 3", "lt i", "fjmp L1",
+                "load a", "push i 1", "add i", "save i a",
+                "jmp L0",
+                "label L1"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+    @Test
+    public void testForStatement() {
+        System.out.println("---- testForStatement ----");
+        String input = """
+        int a;
+        a = 0;
+        for (a = 0; a < 3; a = a + 1) {
+            write(a);
+        }
+        """;
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i a",
+                "push i 0", "save i a",
+                "push i 0", "save i a",
+
+                "label L0",
+                "load a", "push i 3", "lt i", "fjmp L1",
+                "load a", "print",
+                "load a", "push i 1", "add i", "save i a",
+                "jmp L0",
+                "label L1"
+        );
+
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
 }

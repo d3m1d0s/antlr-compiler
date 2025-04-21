@@ -12,8 +12,12 @@ statement
     | '{' statement* '}'                                 # block
     | 'if' '(' expr ')' statement ('else' statement)?    # ifStatement
     | 'while' '(' expr ')' statement                     # whileStatement
-    | 'for' '(' expr? ';' expr? ';' expr? ')' statement  # forStatement
+    | 'for' '(' forInit ';' forCond ';' forUpdate ')' statement  # forStatement
     ;
+
+forInit: IDENTIFIER '=' expr | ;
+forCond: expr?;
+forUpdate: IDENTIFIER '=' expr | ;
 
 expr
     : left=expr op='<<' right=expr                     # fileAppendExpr
