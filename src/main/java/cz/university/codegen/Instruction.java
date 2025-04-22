@@ -49,8 +49,23 @@ public class Instruction {
 
     @Override
     public String toString() {
-        String name = opCode.name().toLowerCase().replace('_', ' ');
-        return (operand != null) ? name + " " + operand : name;
+        String name = opCode.name();
+
+        if (name.contains("_")) {
+            String[] parts = name.split("_");
+            String op = parts[0].toLowerCase();
+            String suffix = parts[1];
+
+            return operand != null
+                    ? op + " " + suffix + " " + operand
+                    : op + " " + suffix;
+        }
+
+        return operand != null
+                ? name.toLowerCase() + " " + operand
+                : name.toLowerCase();
     }
+
+
 }
 

@@ -341,20 +341,14 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     public SymbolTable.Type visitWriteStatement(cz.university.LanguageParser.WriteStatementContext ctx) {
         int count = 0;
         for (var expr : ctx.exprList().expr()) {
-            SymbolTable.Type type = visit(expr);
+            visit(expr);
             count++;
-
-
-            switch (type) {
-                case INT -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
-                case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
-                case BOOL -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
-                case STRING -> instructions.add(new Instruction(Instruction.OpCode.PRINT));
-            }
         }
 
+        instructions.add(new Instruction(Instruction.OpCode.PRINT, String.valueOf(count)));
         return null;
     }
+
 
     @Override
     public SymbolTable.Type visitReadStatement(cz.university.LanguageParser.ReadStatementContext ctx) {
