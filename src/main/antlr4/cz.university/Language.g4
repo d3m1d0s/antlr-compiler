@@ -20,7 +20,8 @@ forCond: expr?;
 forUpdate: IDENTIFIER '=' expr | ;
 
 expr
-    : left=expr op='<<' right=expr                     # fileAppendExpr
+    : left=IDENTIFIER '=' right=expr                   # assignExpr
+    | left=expr op='<<' right=expr                     # fileAppendExpr
     | left=expr op='||' right=expr                     # orExpr
     | left=expr op='&&' right=expr                     # andExpr
     | left=expr op=('==' | '!=') right=expr            # equalityExpr

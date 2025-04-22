@@ -636,4 +636,30 @@ public class AppTest {
         }
     }
 
+    @Test
+    public void testChainAssignment() {
+        System.out.println("---- testChainAssignment ----");
+        String input = """
+        int i, j, k;
+        i = j = k = 55;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push i 0", "save i i",
+                "push i 0", "save i j",
+                "push i 0", "save i k",
+                "push i 55", "save i k",
+                "load k", "save i j",
+                "load j", "save i i"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
+
+
 }
