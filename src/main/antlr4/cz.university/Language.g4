@@ -5,7 +5,7 @@ program: statement* EOF;
 statement
     : ';'                                                # emptyStatement
     | primitiveType variableList ';'                     # declaration
-    | IDENTIFIER '=' expr ';'                            # assignmentStatement
+    | assign ';'                                         # assignmentStatement
     | expr ';'                                           # expressionStatement
     | 'read' identifierList ';'                          # readStatement
     | 'write' exprList ';'                               # writeStatement
@@ -19,8 +19,10 @@ forInit: IDENTIFIER '=' expr | ;
 forCond: expr?;
 forUpdate: IDENTIFIER '=' expr | ;
 
+assign: IDENTIFIER '=' expr;
+
 expr
-    : left=IDENTIFIER '=' right=expr                   # assignExpr
+    : left=assign                                      # assignExpr
     | left=expr op='<<' right=expr                     # fileAppendExpr
     | left=expr op='||' right=expr                     # orExpr
     | left=expr op='&&' right=expr                     # andExpr

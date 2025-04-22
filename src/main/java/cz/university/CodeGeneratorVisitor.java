@@ -66,15 +66,34 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitExpressionStatement(cz.university.LanguageParser.ExpressionStatementContext ctx) {
+        System.out.println("visitExpressionStatement");
         insideExpressionStatement = true;
         SymbolTable.Type type = visit(ctx.expr());
         insideExpressionStatement = false;
+
+        if (ctx.expr() instanceof cz.university.LanguageParser.AssignExprContext assignCtx) {
+            String varName = assignCtx.left.getText();
+            SymbolTable.Type varType = null;
+            try {
+                varType = symbolTable.getType(varName, ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+
+            addSaveInstruction(varType, varName);
+        }
+
+        //instructions.add(new Instruction(Instruction.OpCode.POP));
+
         return type;
     }
 
+
     @Override
     public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
-        String name = ctx.IDENTIFIER().getText();
+        var assignCtx = ctx.assign();
+        String name = assignCtx.IDENTIFIER().getText();
+
         SymbolTable.Type varType;
         try {
             varType = symbolTable.getType(name, ctx.getStart().getLine());
@@ -82,29 +101,22 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             throw new RuntimeException(e);
         }
 
-        SymbolTable.Type exprType = visit(ctx.expr());
+        SymbolTable.Type exprType = visit(assignCtx.expr());
 
         if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
         switch (varType) {
-            case FLOAT -> {
-                instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
-            }
-            case INT -> {
-                instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
-            }
-            case BOOL -> {
-                instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
-            }
-            case STRING -> {
-                instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
-            }
+            case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
+            case INT   -> instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
+            case BOOL  -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
+            case STRING-> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
         }
 
         return varType;
     }
+
 
 
     @Override
@@ -464,8 +476,9 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
-        String varName = ctx.left.getText();
-        int line = ctx.getStart().getLine();
+        var assign = ctx.left;
+        String varName = assign.IDENTIFIER().getText();
+        int line = assign.getStart().getLine();
 
         SymbolTable.Type varType;
         try {
@@ -474,21 +487,15 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             throw new RuntimeException(e);
         }
 
-        SymbolTable.Type valueType = visit(ctx.right);
+        SymbolTable.Type valueType = visit(assign.expr());
 
         if (varType == SymbolTable.Type.FLOAT && valueType == SymbolTable.Type.INT) {
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
-        if (insideExpressionStatement) {
-            addSaveInstruction(varType, varName);
-        } else {
-            addSaveInstruction(varType, varName);
-            instructions.add(new Instruction(Instruction.OpCode.LOAD, varName));
-        }
-
         return varType;
     }
+
 
 
     private void addSaveInstruction(SymbolTable.Type type, String name) {

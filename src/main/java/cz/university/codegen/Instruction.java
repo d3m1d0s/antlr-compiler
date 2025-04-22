@@ -49,22 +49,40 @@ public class Instruction {
 
     @Override
     public String toString() {
-        String name = opCode.name();
+        switch (opCode) {
+            case LOAD:
+            case POP:
+            case PRINT:
+            case LABEL:
+            case JMP:
+            case FJMP:
+                return operand != null ? opCode.name().toLowerCase() + " " + operand : opCode.name().toLowerCase();
 
+            case SAVE_I:
+            case SAVE_F:
+            case SAVE_S:
+            case SAVE_B:
+                return "save " + operand;
+
+            default:
+                break;
+        }
+
+        String name = opCode.name();
         if (name.contains("_")) {
             String[] parts = name.split("_");
             String op = parts[0].toLowerCase();
-            String suffix = parts[1];
-
+            String type = parts[1].toUpperCase();
             return operand != null
-                    ? op + " " + suffix + " " + operand
-                    : op + " " + suffix;
+                    ? op + " " + type + " " + operand
+                    : op + " " + type;
         }
 
         return operand != null
                 ? name.toLowerCase() + " " + operand
                 : name.toLowerCase();
     }
+
 
 
 }

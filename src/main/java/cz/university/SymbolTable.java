@@ -66,14 +66,43 @@ public class SymbolTable {
             return getExprType(parenCtx.expr(), line);
         }
 
-        // recursive left and right if it can be
-        try {
-            var method = ctx.getClass().getMethod("expr", int.class);
-            return getExprType((ParserRuleContext) method.invoke(ctx, 0), line);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot statically infer type of expression: " + ctx.getText(), e);
+        if (ctx instanceof cz.university.LanguageParser.AdditiveExprContext addCtx) {
+            Type left = getExprType(addCtx.left, line);
+            Type right = getExprType(addCtx.right, line);
+            if (left == Type.FLOAT || right == Type.FLOAT) return Type.FLOAT;
+            if (left == Type.INT && right == Type.INT) return Type.INT;
+            if (left == Type.STRING && right == Type.STRING) return Type.STRING;
+            throw new RuntimeException("Cannot infer type for additive expr: " + ctx.getText());
         }
+
+        if (ctx instanceof cz.university.LanguageParser.MultiplicativeExprContext mulCtx) {
+            Type left = getExprType(mulCtx.left, line);
+            Type right = getExprType(mulCtx.right, line);
+            if (left == Type.FLOAT || right == Type.FLOAT) return Type.FLOAT;
+            if (left == Type.INT && right == Type.INT) return Type.INT;
+            throw new RuntimeException("Cannot infer type for multiplicative expr: " + ctx.getText());
+        }
+
+        if (ctx instanceof cz.university.LanguageParser.AssignExprContext assignCtx) {
+            String name = assignCtx.left.getText();
+            try {
+                return getType(name, line);
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        if (ctx instanceof cz.university.LanguageParser.EqualityExprContext eqCtx
+                || ctx instanceof cz.university.LanguageParser.RelationalExprContext relCtx
+                || ctx instanceof cz.university.LanguageParser.AndExprContext
+                || ctx instanceof cz.university.LanguageParser.OrExprContext
+                || ctx instanceof cz.university.LanguageParser.NotExprContext) {
+            return Type.BOOL;
+        }
+
+        throw new RuntimeException("Cannot statically infer type of expression: " + ctx.getText());
     }
+
 
 
     public Object getValue(String name, int line) throws TypeException {
