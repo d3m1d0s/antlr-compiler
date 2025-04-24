@@ -70,7 +70,6 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         SymbolTable.Type type = null;
 
         if (ctx.expr() instanceof cz.university.LanguageParser.AssignExprContext assign) {
-            // собрать цепочку переменных
             List<String> vars = new ArrayList<>();
             cz.university.LanguageParser.ExprContext current = assign;
             while (current instanceof cz.university.LanguageParser.AssignExprContext a) {
@@ -78,10 +77,8 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                 current = a.right;
             }
 
-            // вычислить правое выражение (значение)
             type = visit(current);
 
-            // пройти цепочкой и сохранить с загрузкой
             for (int i = vars.size() - 1; i >= 0; i--) {
                 String var = vars.get(i);
                 SymbolTable.Type varType;
@@ -93,20 +90,30 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
                 if (i != vars.size() - 1) {
                     instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(i + 1)));
+                    instructions.add(new Instruction(Instruction.OpCode.POP));
                 }
 
                 if (varType == SymbolTable.Type.FLOAT && type == SymbolTable.Type.INT) {
                     instructions.add(new Instruction(Instruction.OpCode.ITOF));
                 }
+
                 addSaveInstruction(varType, var);
+            }
+
+            if (vars.size() == 1) {
+                instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
+                instructions.add(new Instruction(Instruction.OpCode.POP));
             }
         } else {
             type = visit(ctx.expr());
+
+            instructions.add(new Instruction(Instruction.OpCode.POP));
         }
 
         insideExpressionStatement = false;
         return type;
     }
+
 
 
 //    @Override

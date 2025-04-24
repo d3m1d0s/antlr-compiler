@@ -145,15 +145,18 @@ public class AppTest {
         b = 3;
         result = a + b;
         """;
+
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
+
         List<String> expected = List.of(
                 "push I 0", "save a",
                 "push I 0", "save b",
                 "push I 0", "save result",
-                "push I 2", "save a",
-                "push I 3", "save b",
-                "load a", "load b", "add I", "save result"
+
+                "push I 2", "save a", "load a", "pop",
+                "push I 3", "save b", "load b", "pop",
+                "load a", "load b", "add I", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -175,13 +178,15 @@ public class AppTest {
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
+
         List<String> expected = List.of(
                 "push I 0", "save a",
                 "push F 0.0", "save b",
                 "push F 0.0", "save result",
-                "push I 10", "save a",
-                "push F 2.5", "save b",
-                "load a", "itof", "load b", "sub F", "save result"
+
+                "push I 10", "save a", "load a", "pop",
+                "push F 2.5", "save b", "load b", "pop",
+                "load a", "itof", "load b", "sub F", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -203,19 +208,22 @@ public class AppTest {
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
+
         List<String> expected = List.of(
                 "push S \"\"", "save s1",
                 "push S \"\"", "save s2",
                 "push S \"\"", "save result",
-                "push S \"A\"", "save s1",
-                "push S \"B\"", "save s2",
-                "load s1", "load s2", "concat", "save result"
+
+                "push S \"A\"", "save s1", "load s1", "pop",
+                "push S \"B\"", "save s2", "load s2", "pop",
+                "load s1", "load s2", "concat", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.get(i), instr.get(i).toString());
         }
     }
+
 
     @Test
     public void testMultiplyInt() {
@@ -231,13 +239,15 @@ public class AppTest {
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
+
         List<String> expected = List.of(
                 "push I 0", "save a",
                 "push I 0", "save b",
                 "push I 0", "save result",
-                "push I 3", "save a",
-                "push I 4", "save b",
-                "load a", "load b", "mul I", "save result"
+
+                "push I 3", "save a", "load a", "pop",
+                "push I 4", "save b", "load b", "pop",
+                "load a", "load b", "mul I", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -259,13 +269,15 @@ public class AppTest {
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
+
         List<String> expected = List.of(
                 "push I 0", "save a",
                 "push I 0", "save b",
                 "push I 0", "save result",
-                "push I 7", "save a",
-                "push I 3", "save b",
-                "load a", "load b", "mod", "save result"
+
+                "push I 7", "save a", "load a", "pop",
+                "push I 3", "save b", "load b", "pop",
+                "load a", "load b", "mod", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -292,9 +304,11 @@ public class AppTest {
                 "push I 0", "save a",
                 "push F 0.0", "save b",
                 "push B false", "save result",
-                "push I 3", "save a",
-                "push F 3.0", "save b",
-                "load a", "itof", "load b", "eq F", "save result"
+
+                "push I 3", "save a", "load a", "pop",
+                "push F 3.0", "save b", "load b", "pop",
+
+                "load a", "itof", "load b", "eq F", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -321,9 +335,11 @@ public class AppTest {
                 "push S \"\"", "save a",
                 "push S \"\"", "save b",
                 "push B false", "save result",
-                "push S \"foo\"", "save a",
-                "push S \"bar\"", "save b",
-                "load a", "load b", "eq S", "save result"
+
+                "push S \"foo\"", "save a", "load a", "pop",
+                "push S \"bar\"", "save b", "load b", "pop",
+
+                "load a", "load b", "eq S", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -350,9 +366,11 @@ public class AppTest {
                 "push I 0", "save a",
                 "push I 0", "save b",
                 "push B false", "save result",
-                "push I 1", "save a",
-                "push I 2", "save b",
-                "load a", "load b", "lt I", "save result"
+
+                "push I 1", "save a", "load a", "pop",
+                "push I 2", "save b", "load b", "pop",
+
+                "load a", "load b", "lt I", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -379,9 +397,11 @@ public class AppTest {
                 "push I 0", "save a",
                 "push F 0.0", "save b",
                 "push B false", "save result",
-                "push I 4", "save a",
-                "push F 2.5", "save b",
-                "load a", "itof", "load b", "gt F", "save result"
+
+                "push I 4", "save a", "load a", "pop",
+                "push F 2.5", "save b", "load b", "pop",
+
+                "load a", "itof", "load b", "gt F", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -405,8 +425,10 @@ public class AppTest {
         List<String> expected = List.of(
                 "push B false", "save a",
                 "push B false", "save result",
-                "push B false", "save a",
-                "load a", "not", "save result"
+
+                "push B false", "save a", "load a", "pop",
+
+                "load a", "not", "save result", "load result", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -428,20 +450,14 @@ public class AppTest {
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
         List<String> expected = List.of(
-                "push B false",
-                "save a",
-                "push B false",
-                "save b",
-                "push B false",
-                "save result",
-                "push B true",
-                "save a",
-                "push B false",
-                "save b",
-                "load a",
-                "load b",
-                "and",
-                "save result"
+                "push B false", "save a",
+                "push B false", "save b",
+                "push B false", "save result",
+
+                "push B true", "save a", "load a", "pop",
+                "push B false", "save b", "load b", "pop",
+
+                "load a", "load b", "and", "save result", "load result", "pop"
         );
         for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.get(i), instr.get(i).toString());
@@ -462,20 +478,14 @@ public class AppTest {
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
         List<String> expected = List.of(
-                "push B false",
-                "save a",
-                "push B false",
-                "save b",
-                "push B false",
-                "save result",
-                "push B false",
-                "save a",
-                "push B true",
-                "save b",
-                "load a",
-                "load b",
-                "or",
-                "save result"
+                "push B false", "save a",
+                "push B false", "save b",
+                "push B false", "save result",
+
+                "push B false", "save a", "load a", "pop",
+                "push B true", "save b", "load b", "pop",
+
+                "load a", "load b", "or", "save result", "load result", "pop"
         );
         for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.get(i), instr.get(i).toString());
@@ -504,15 +514,12 @@ public class AppTest {
                 "push B false", "save c",
                 "push S \"\"", "save d",
 
-                "push I 10", "save a",
-                "push F 3.14", "save b",
-                "push B true", "save c",
-                "push S \"Hi!\"", "save d",
+                "push I 10", "save a", "load a", "pop",
+                "push F 3.14", "save b", "load b", "pop",
+                "push B true", "save c", "load c", "pop",
+                "push S \"Hi!\"", "save d", "load d", "pop",
 
-                "load a",
-                "load b",
-                "load c",
-                "load d",
+                "load a", "load b", "load c", "load d",
                 "print 4"
         );
         for (int i = 0; i < expected.size(); i++) {
@@ -566,11 +573,10 @@ public class AppTest {
                 "push B false", "save cond",
                 "push I 0", "save a",
 
-                "push B true", "save cond",
+                "push B true", "save cond", "load cond", "pop",
 
-                "load cond",
-                "fjmp L0",
-                "push I 42", "save a",
+                "load cond", "fjmp L0",
+                "push I 42", "save a", "load a", "pop",
                 "label L0"
         );
 
@@ -594,12 +600,11 @@ public class AppTest {
 
         List<String> expected = List.of(
                 "push I 0", "save a",
-
-                "push I 0", "save a",
+                "push I 0", "save a", "load a", "pop",
 
                 "label L0",
                 "load a", "push I 3", "lt I", "fjmp L1",
-                "load a", "push I 1", "add I", "save a",
+                "load a", "push I 1", "add I", "save a", "load a", "pop",
                 "jmp L0",
                 "label L1"
         );
@@ -624,17 +629,18 @@ public class AppTest {
 
         List<String> expected = List.of(
                 "push I 0", "save a",
-                "push I 0", "save a",
+                "push I 0", "save a", "load a", "pop",
                 "push I 0", "save a",
 
                 "label L0",
                 "load a", "push I 3", "lt I", "fjmp L1",
+
                 "load a", "print 1",
+
                 "load a", "push I 1", "add I", "save a",
                 "jmp L0",
                 "label L1"
         );
-
 
         for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.get(i), instr.get(i).toString());
@@ -668,7 +674,6 @@ public class AppTest {
 
     @Test
     public void testOutputAgainstReferenceFiles() throws IOException {
-        //TODO: pop
         System.out.println("---- testOutputAgainstReferenceFiles ----");
 
         String source = Files.readString(Path.of("src/test/resources/test.lang"));
