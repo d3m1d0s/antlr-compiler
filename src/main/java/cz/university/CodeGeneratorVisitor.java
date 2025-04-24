@@ -88,35 +88,39 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return type;
     }
 
-
-    @Override
-    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
-        var assignCtx = ctx.assign();
-        String name = assignCtx.IDENTIFIER().getText();
-
-        SymbolTable.Type varType;
-        try {
-            varType = symbolTable.getType(name, ctx.getStart().getLine());
-        } catch (TypeException e) {
-            throw new RuntimeException(e);
-        }
-
-        SymbolTable.Type exprType = visit(assignCtx.expr());
-
-        if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
-            instructions.add(new Instruction(Instruction.OpCode.ITOF));
-        }
-
-        switch (varType) {
-            case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
-            case INT   -> instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
-            case BOOL  -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
-            case STRING-> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
-        }
-
-        return varType;
-    }
-
+//    @Override
+//    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
+//        String name = ctx.IDENTIFIER().getText();
+//        SymbolTable.Type varType;
+//        try {
+//            varType = symbolTable.getType(name, ctx.getStart().getLine());
+//        } catch (TypeException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        SymbolTable.Type exprType = visit(ctx.expr());
+//
+//        if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
+//            instructions.add(new Instruction(Instruction.OpCode.ITOF));
+//        }
+//
+//        switch (varType) {
+//            case FLOAT -> {
+//                instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
+//            }
+//            case INT -> {
+//                instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
+//            }
+//            case BOOL -> {
+//                instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
+//            }
+//            case STRING -> {
+//                instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+//            }
+//        }
+//
+//        return varType;
+//    }
 
 
     @Override
@@ -476,9 +480,8 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
-        var assign = ctx.left;
-        String varName = assign.IDENTIFIER().getText();
-        int line = assign.getStart().getLine();
+        String varName = ctx.left.getText();
+        int line = ctx.getStart().getLine();
 
         SymbolTable.Type varType;
         try {
@@ -487,7 +490,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             throw new RuntimeException(e);
         }
 
-        SymbolTable.Type valueType = visit(assign.expr());
+        SymbolTable.Type valueType = visit(ctx.right);
 
         if (varType == SymbolTable.Type.FLOAT && valueType == SymbolTable.Type.INT) {
             instructions.add(new Instruction(Instruction.OpCode.ITOF));

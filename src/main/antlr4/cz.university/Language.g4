@@ -5,11 +5,10 @@ program: statement* EOF;
 statement
     : ';'                                                # emptyStatement
     | primitiveType variableList ';'                     # declaration
-    | assign ';'                                         # assignmentStatement
     | expr ';'                                           # expressionStatement
     | 'read' identifierList ';'                          # readStatement
     | 'write' exprList ';'                               # writeStatement
-    | '{' statement* '}'                                 # block
+    | '{' statement* '}'                                 # blockStatement
     | 'if' '(' expr ')' statement ('else' statement)?    # ifStatement
     | 'while' '(' expr ')' statement                     # whileStatement
     | 'for' '(' forInit ';' forCond ';' forUpdate ')' statement  # forStatement
@@ -19,31 +18,33 @@ forInit: IDENTIFIER '=' expr | ;
 forCond: expr?;
 forUpdate: IDENTIFIER '=' expr | ;
 
-assign: IDENTIFIER '=' expr;
+primitiveType: INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
+
+identifierList: IDENTIFIER (',' IDENTIFIER)*;
+
+variableList: IDENTIFIER (',' IDENTIFIER)*;
+
+exprList: expr (',' expr)*;
 
 expr
-    : left=assign                                      # assignExpr
-    | left=expr op='<<' right=expr                     # fileAppendExpr
-    | left=expr op='||' right=expr                     # orExpr
-    | left=expr op='&&' right=expr                     # andExpr
-    | left=expr op=('==' | '!=') right=expr            # equalityExpr
-    | left=expr op=('<' | '>') right=expr              # relationalExpr
+    : left=expr op=('*' | '/' | '%') right=expr        # multiplicativeExpr
     | left=expr op=('+' | '-' | '.') right=expr        # additiveExpr
-    | left=expr op=('*' | '/' | '%') right=expr        # multiplicativeExpr
+    | left=expr op=('<' | '>') right=expr              # relationalExpr
+    | left=expr op=('==' | '!=') right=expr            # equalityExpr
+    | left=expr op='&&' right=expr                     # andExpr
+    | left=expr op='||' right=expr                     # orExpr
     | op='!' expr                                      # notExpr
     | op='-' expr                                      # unaryMinusExpr
+    | left=expr op='<<' right=expr                     # fileAppendExpr
+    | left=IDENTIFIER '=' right=expr                   # assignExpr
+    | '(' expr ')'                                     # parenExpr
     | IDENTIFIER                                       # idExpr
     | INT                                              # intExpr
     | FLOAT                                            # floatExpr
     | BOOL                                             # boolExpr
     | STRING                                           # stringExpr
-    | '(' expr ')'                                     # parenExpr
     ;
 
-primitiveType: INT_T | FLOAT_T | BOOL_T | STRING_T | FILE_T;
-variableList: IDENTIFIER (',' IDENTIFIER)*;
-identifierList: IDENTIFIER (',' IDENTIFIER)*;
-exprList: expr (',' expr)*;
 
 // === LEXER ===
 INT_T: 'int';
