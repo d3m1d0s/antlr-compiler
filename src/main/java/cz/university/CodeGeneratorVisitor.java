@@ -507,6 +507,19 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     }
 
     @Override
+    public SymbolTable.Type visitUnaryMinusExpr(cz.university.LanguageParser.UnaryMinusExprContext ctx) {
+        SymbolTable.Type type = visit(ctx.expr());
+
+        switch (type) {
+            case INT -> instructions.add(new Instruction(Instruction.OpCode.UMINUS_I));
+            case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.UMINUS_F));
+            default -> throw new RuntimeException("Unary minus not supported for type: " + type);
+        }
+
+        return type;
+    }
+
+    @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
         SymbolTable.Type valueType = visit(ctx.right);
 
