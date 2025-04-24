@@ -663,8 +663,8 @@ public class AppTest {
                 "push I 0", "save j",
                 "push I 0", "save k",
                 "push I 55", "save k",
-                "load k", "pop", "save j",
-                "load j", "pop", "save i"
+                "load k", "save j",
+                "load j", "save i", "pop"
         );
 
         for (int i = 0; i < expected.size(); i++) {

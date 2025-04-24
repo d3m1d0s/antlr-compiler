@@ -90,7 +90,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
                 if (i != vars.size() - 1) {
                     instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(i + 1)));
-                    instructions.add(new Instruction(Instruction.OpCode.POP));
+                    //instructions.add(new Instruction(Instruction.OpCode.POP));
                 }
 
                 if (varType == SymbolTable.Type.FLOAT && type == SymbolTable.Type.INT) {
@@ -100,10 +100,8 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                 addSaveInstruction(varType, var);
             }
 
-            if (vars.size() == 1) {
-                instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
-                instructions.add(new Instruction(Instruction.OpCode.POP));
-            }
+            instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
+            instructions.add(new Instruction(Instruction.OpCode.POP));
         } else {
             type = visit(ctx.expr());
 
