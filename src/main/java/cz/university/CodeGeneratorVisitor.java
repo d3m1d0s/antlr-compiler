@@ -66,27 +66,48 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitExpressionStatement(cz.university.LanguageParser.ExpressionStatementContext ctx) {
-        System.out.println("visitExpressionStatement");
         insideExpressionStatement = true;
-        SymbolTable.Type type = visit(ctx.expr());
-        insideExpressionStatement = false;
+        SymbolTable.Type type = null;
 
-        if (ctx.expr() instanceof cz.university.LanguageParser.AssignExprContext assignCtx) {
-            String varName = assignCtx.left.getText();
-            SymbolTable.Type varType = null;
-            try {
-                varType = symbolTable.getType(varName, ctx.getStart().getLine());
-            } catch (TypeException e) {
-                throw new RuntimeException(e);
+        if (ctx.expr() instanceof cz.university.LanguageParser.AssignExprContext assign) {
+            // собрать цепочку переменных
+            List<String> vars = new ArrayList<>();
+            cz.university.LanguageParser.ExprContext current = assign;
+            while (current instanceof cz.university.LanguageParser.AssignExprContext a) {
+                vars.add(a.left.getText());
+                current = a.right;
             }
 
-            addSaveInstruction(varType, varName);
+            // вычислить правое выражение (значение)
+            type = visit(current);
+
+            // пройти цепочкой и сохранить с загрузкой
+            for (int i = vars.size() - 1; i >= 0; i--) {
+                String var = vars.get(i);
+                SymbolTable.Type varType;
+                try {
+                    varType = symbolTable.getType(var, ctx.getStart().getLine());
+                } catch (TypeException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (i != vars.size() - 1) {
+                    instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(i + 1)));
+                }
+
+                if (varType == SymbolTable.Type.FLOAT && type == SymbolTable.Type.INT) {
+                    instructions.add(new Instruction(Instruction.OpCode.ITOF));
+                }
+                addSaveInstruction(varType, var);
+            }
+        } else {
+            type = visit(ctx.expr());
         }
 
-        //instructions.add(new Instruction(Instruction.OpCode.POP));
-
+        insideExpressionStatement = false;
         return type;
     }
+
 
 //    @Override
 //    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
@@ -480,24 +501,29 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitAssignExpr(cz.university.LanguageParser.AssignExprContext ctx) {
-        String varName = ctx.left.getText();
-        int line = ctx.getStart().getLine();
+        SymbolTable.Type valueType = visit(ctx.right);
 
+        String varName = ctx.left.getText();
         SymbolTable.Type varType;
         try {
-            varType = symbolTable.getType(varName, line);
+            varType = symbolTable.getType(varName, ctx.getStart().getLine());
         } catch (TypeException e) {
             throw new RuntimeException(e);
         }
-
-        SymbolTable.Type valueType = visit(ctx.right);
 
         if (varType == SymbolTable.Type.FLOAT && valueType == SymbolTable.Type.INT) {
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
+        if (!insideExpressionStatement) {
+            addSaveInstruction(varType, varName);
+            return varType;
+        }
+
         return varType;
     }
+
+
 
 
 
