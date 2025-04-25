@@ -575,9 +575,9 @@ public class AppTest {
 
                 "push B true", "save cond", "load cond", "pop",
 
-                "load cond", "fjmp L0",
-                "push I 42", "save a", "load a", "pop",
-                "label L0"
+                "load cond", "fjmp 0",
+                "push I 42", "save a", "load a", "pop", "jmp 1",
+                "label 0", "label 1"
         );
 
         for (int i = 0; i < expected.size(); i++) {

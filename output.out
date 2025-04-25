@@ -17,7 +17,9 @@ push S "second"
 print 1
 push S "if"
 print 1
+jmp 3
 label 2
+label 3
 push I 0
 save a
 push I 0

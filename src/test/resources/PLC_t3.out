@@ -25,14 +25,14 @@ save a
 push I 0
 save b
 label 4
-load a 
+load a
 push I 10
 lt I
 fjmp 5
 push S "a="
-load a 
+load a
 print 2
-load a 
+load a
 push I 1
 add I
 save a
@@ -47,16 +47,16 @@ pop
 read I
 save b
 label 6
-load a 
-load b 
+load a
+load b
 lt I
 fjmp 7
 push S "a="
-load a 
+load a
 push S ", b="
-load b 
+load b
 print 4
-load a 
+load a
 push I 1
 add I
 save a

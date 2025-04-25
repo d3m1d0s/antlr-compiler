@@ -450,20 +450,23 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         SymbolTable.Type conditionType = visit(ctx.expr());
         instructions.add(new Instruction(Instruction.OpCode.FJMP, elseLabel));
 
-        visit(ctx.statement(0)); // if ...
+        // then
+        visit(ctx.statement(0));
 
-        if (ctx.statement().size() > 1) {
-            instructions.add(new Instruction(Instruction.OpCode.JMP, endLabel));
-        }
-
+        instructions.add(new Instruction(Instruction.OpCode.JMP, endLabel));
         instructions.add(new Instruction(Instruction.OpCode.LABEL, elseLabel));
+
         if (ctx.statement().size() > 1) {
-            visit(ctx.statement(1)); // else ...
-            instructions.add(new Instruction(Instruction.OpCode.LABEL, endLabel));
+            // else
+            visit(ctx.statement(1));
         }
+
+        instructions.add(new Instruction(Instruction.OpCode.LABEL, endLabel));
 
         return null;
     }
+
+
 
     @Override
     public SymbolTable.Type visitForStatement(cz.university.LanguageParser.ForStatementContext ctx) {
