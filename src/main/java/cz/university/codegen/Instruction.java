@@ -13,7 +13,7 @@ public class Instruction {
         AND, OR,
         GT_I, GT_F,
         LT_I, LT_F,
-        EQ_I, EQ_F, EQ_S,
+        EQ_I, EQ_F, EQ_S, EQ_B,
         NOT,
         ITOF,
         PUSH_I, PUSH_F, PUSH_S, PUSH_B,

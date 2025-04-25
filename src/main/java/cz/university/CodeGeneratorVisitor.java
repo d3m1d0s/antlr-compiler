@@ -276,6 +276,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     public SymbolTable.Type visitEqualityExpr(cz.university.LanguageParser.EqualityExprContext ctx) {
         var leftExpr = ctx.expr(0);
         var rightExpr = ctx.expr(1);
+        String op = ctx.op.getText();
 
         int line = ctx.getStart().getLine();
         SymbolTable.Type leftType = symbolTable.getExprType(leftExpr, line);
@@ -296,19 +297,23 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         if (floatComparison) {
             instructions.add(new Instruction(Instruction.OpCode.EQ_F));
             return SymbolTable.Type.BOOL;
-        }
-
-        if (leftType == rightType) {
+        } else if (leftType == rightType) {
             switch (leftType) {
                 case INT -> instructions.add(new Instruction(Instruction.OpCode.EQ_I));
                 case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.EQ_F));
                 case STRING -> instructions.add(new Instruction(Instruction.OpCode.EQ_S));
-                default -> {}
+                case BOOL -> instructions.add(new Instruction(Instruction.OpCode.EQ_B));
+                default -> throw new RuntimeException("Unsupported EQ type: " + leftType);
             }
-            return SymbolTable.Type.BOOL;
+        } else {
+            throw new RuntimeException("Type mismatch in equality expression at line " + line);
         }
 
-        return null;
+        if (op.equals("!=")) {
+            instructions.add(new Instruction(Instruction.OpCode.NOT));
+        }
+
+        return SymbolTable.Type.BOOL;
     }
 
     @Override
