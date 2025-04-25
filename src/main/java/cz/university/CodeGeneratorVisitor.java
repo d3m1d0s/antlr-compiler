@@ -560,7 +560,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     }
 
     private String nextLabel() {
-        return "L" + (labelCounter++);
+        return String.valueOf(labelCounter++);
     }
 
 
