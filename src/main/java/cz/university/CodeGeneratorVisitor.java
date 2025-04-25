@@ -113,42 +113,6 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     }
 
 
-
-//    @Override
-//    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
-//        String name = ctx.IDENTIFIER().getText();
-//        SymbolTable.Type varType;
-//        try {
-//            varType = symbolTable.getType(name, ctx.getStart().getLine());
-//        } catch (TypeException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        SymbolTable.Type exprType = visit(ctx.expr());
-//
-//        if (varType == SymbolTable.Type.FLOAT && exprType == SymbolTable.Type.INT) {
-//            instructions.add(new Instruction(Instruction.OpCode.ITOF));
-//        }
-//
-//        switch (varType) {
-//            case FLOAT -> {
-//                instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
-//            }
-//            case INT -> {
-//                instructions.add(new Instruction(Instruction.OpCode.SAVE_I, name));
-//            }
-//            case BOOL -> {
-//                instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
-//            }
-//            case STRING -> {
-//                instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
-//            }
-//        }
-//
-//        return varType;
-//    }
-
-
     @Override
     public SymbolTable.Type visitIdExpr(cz.university.LanguageParser.IdExprContext ctx) {
         String name = ctx.IDENTIFIER().getText();

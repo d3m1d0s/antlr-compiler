@@ -42,31 +42,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         return null;
     }
 
-//    @Override
-//    public SymbolTable.Type visitAssignmentStatement(cz.university.LanguageParser.AssignmentStatementContext ctx) {
-//        String varName = ctx.IDENTIFIER().getText();
-//        int line = ctx.getStart().getLine();
-//        try {
-//            SymbolTable.Type varType = symbolTable.getType(varName, line);
-//            SymbolTable.Type valueType = visit(ctx.expr());
-//
-//            if (valueType == null) {
-//                typeError(ctx.IDENTIFIER().getSymbol(), "Right-hand side of assignment to '" + varName + "' has invalid type.");
-//                return null;
-//            }
-//
-//            if (!isCompatible(varType, valueType)) {
-//                typeError(ctx.IDENTIFIER().getSymbol(), "Variable '" + varName + "' type is " + varType + ", but assigned value is " + valueType + ".");
-//                return null;
-//            }
-//
-//            return varType;
-//        } catch (TypeException e) {
-//            errors.add(e.getMessage());
-//            return null;
-//        }
-//    }
-
     @Override
     public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
         SymbolTable.Type leftType = visit(ctx.expr(0));
