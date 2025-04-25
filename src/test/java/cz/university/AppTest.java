@@ -673,64 +673,47 @@ public class AppTest {
     }
 
     @Test
-    public void testOutputAgainstReferenceFiles() throws IOException {
-        System.out.println("---- testOutputAgainstReferenceFiles ----");
+    public void testAllInputsAgainstReferenceOutputs() throws IOException {
+        System.out.println("---- testAllInputsAgainstReferenceOutputs ----");
 
-        String source = Files.readString(Path.of("src/test/resources/test.lang"));
+        for (int testNum = 1; testNum <= 3; testNum++) {
+            System.out.println("Running test PLC_t" + testNum);
 
-        List<Instruction> instructions = generate(source);
+            Path inputPath = Path.of("src/test/resources/PLC_t" + testNum + ".in");
+            Path expectedOutputPath = Path.of("src/test/resources/PLC_t" + testNum + ".out");
 
-        Path outPath = Path.of("output.out");
-        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outPath))) {
-            for (Instruction instr : instructions) {
-                writer.println(instr);
-            }
-        }
+            String source = Files.readString(inputPath);
+            List<Instruction> instructions = generate(source);
 
-        List<String> actual = Files.readAllLines(outPath);
-        List<List<String>> references = List.of(
-                Files.readAllLines(Path.of("src/test/resources/PLC_t1.out")),
-                Files.readAllLines(Path.of("src/test/resources/PLC_t2.out")),
-                Files.readAllLines(Path.of("src/test/resources/PLC_t3.out"))
-        );
-
-        for (int i = 0; i < references.size(); i++) {
-            if (actual.equals(references.get(i))) {
-                System.out.println("Output matches PLC_t" + (i + 1) + ".out");
-                return;
-            }
-        }
-
-        int bestMatchIndex = -1;
-        int maxMatches = -1;
-        for (int i = 0; i < references.size(); i++) {
-            List<String> ref = references.get(i);
-            int matches = 0;
-            for (int j = 0; j < Math.min(actual.size(), ref.size()); j++) {
-                if (actual.get(j).equals(ref.get(j))) {
-                    matches++;
+            Path outPath = Path.of("output_t" + testNum + ".out");
+            try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outPath))) {
+                for (Instruction instr : instructions) {
+                    writer.println(instr);
                 }
             }
-            if (matches > maxMatches) {
-                maxMatches = matches;
-                bestMatchIndex = i;
+
+            List<String> actual = Files.readAllLines(outPath);
+            List<String> expected = Files.readAllLines(expectedOutputPath);
+
+            if (actual.equals(expected)) {
+                System.out.println("Output for PLC_t" + testNum + " matches expected output.");
+            } else {
+                System.err.println("Mismatch for PLC_t" + testNum);
+                System.err.println("------ DIFF ------");
+
+                int maxLines = Math.max(actual.size(), expected.size());
+                for (int i = 0; i < maxLines; i++) {
+                    String act = i < actual.size() ? actual.get(i) : "<missing>";
+                    String exp = i < expected.size() ? expected.get(i) : "<missing>";
+                    if (!act.equals(exp)) {
+                        System.err.printf("Line %d:\n  Expected: %s\n  Actual:   %s\n", i + 1, exp, act);
+                    }
+                }
+
+                fail("Generated output_t" + testNum + ".out does not match PLC_t" + testNum + ".out");
             }
         }
-
-        List<String> expected = references.get(bestMatchIndex);
-        System.err.println("No full match found. Closest match: PLC_t" + (bestMatchIndex + 1) + ".out");
-        System.err.println("------ DIFF ------");
-
-        int maxLines = Math.max(actual.size(), expected.size());
-        for (int i = 0; i < maxLines; i++) {
-            String act = i < actual.size() ? actual.get(i) : "<missing>";
-            String exp = i < expected.size() ? expected.get(i) : "<missing>";
-            if (!act.equals(exp)) {
-                System.err.printf("Line %d:\n  Expected: %s\n  Actual:   %s\n", i + 1, exp, act);
-            }
-        }
-
-        fail("Generated output.out does not match any reference output.");
     }
+
 
 }
