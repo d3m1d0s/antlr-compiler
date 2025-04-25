@@ -602,11 +602,11 @@ public class AppTest {
                 "push I 0", "save a",
                 "push I 0", "save a", "load a", "pop",
 
-                "label L0",
-                "load a", "push I 3", "lt I", "fjmp L1",
+                "label 0",
+                "load a", "push I 3", "lt I", "fjmp 1",
                 "load a", "push I 1", "add I", "save a", "load a", "pop",
-                "jmp L0",
-                "label L1"
+                "jmp 0",
+                "label 1"
         );
 
         for (int i = 0; i < expected.size(); i++) {
@@ -632,14 +632,14 @@ public class AppTest {
                 "push I 0", "save a", "load a", "pop",
                 "push I 0", "save a",
 
-                "label L0",
-                "load a", "push I 3", "lt I", "fjmp L1",
+                "label 0",
+                "load a", "push I 3", "lt I", "fjmp 1",
 
                 "load a", "print 1",
 
                 "load a", "push I 1", "add I", "save a",
-                "jmp L0",
-                "label L1"
+                "jmp 0",
+                "label 1"
         );
 
         for (int i = 0; i < expected.size(); i++) {
