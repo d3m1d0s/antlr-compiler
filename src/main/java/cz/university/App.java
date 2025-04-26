@@ -4,6 +4,9 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
 public class App {
     private static final String EXT = "lang";
@@ -40,8 +43,12 @@ public class App {
 
         // === Save to file ===
         generator.saveToFile("output.out");
-
         System.out.println("Code successfully generated to output.out");
+
+        List<String> instructions = Files.readAllLines(Paths.get("output.out"));
+        StackMachine machine = new StackMachine();
+        machine.execute(instructions);
+
         System.out.println("FINISH: " + file);
     }
 }
