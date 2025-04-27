@@ -1,56 +1,66 @@
-push S "<Relational operators>"
-print 1
-push S "1<5: "
-push I 1
-push I 5
+push I 3
+push I 4
 lt I
-print 2
-push S "1>3.5: "
-push I 1
-itof
-push F 3.5
-gt F
-print 2
-push S "aa==aa: "
-push S "aa"
-push S "aa"
-eq S
-print 2
-push S "aa==ab: "
-push S "aa"
-push S "ab"
-eq S
-print 2
-push S "aa!=ab: "
-push S "aa"
-push S "ab"
-eq S
-not
-print 2
-push S ""
+fjmp 0
+push S "condition was true"
 print 1
-push S "<Logic operators>"
+jmp 1
+label 0
+push S "condition was false"
 print 1
-push S "false and true (false):"
-push B false
+label 1
 push B true
-and
+fjmp 2
+push S "inside"
+print 1
+push S "second"
+print 1
+push S "if"
+print 1
+jmp 3
+label 2
+label 3
+push I 0
+save a
+push I 0
+save b
+label 4
+load a
+push I 10
+lt I
+fjmp 5
+push S "a="
+load a
 print 2
-push S "false or true (true):"
-push B false
-push B true
-or
-print 2
-push S "not 1==2 (true):"
+load a
 push I 1
-push I 2
-eq I
-not
-print 2
-push S "true or false and true (true):"
-push B true
-push B false
-push B true
-and
-or
-print 2
+add I
+save a
+load a
+pop
+jmp 4
+label 5
+push I 0
+save a
+load a
+pop
+read I
+save b
+label 6
+load a
+load b
+lt I
+fjmp 7
+push S "a="
+load a
+push S ", b="
+load b
+print 4
+load a
+push I 1
+add I
+save a
+load a
+pop
+jmp 6
+label 7

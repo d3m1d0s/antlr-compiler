@@ -188,11 +188,11 @@ public class StackMachine {
                     case "mul": stack.push(ai * bi); break;
                     case "div": check(bi != 0, "Division by zero"); stack.push(ai / bi); break;
                     case "mod": check(bi != 0, "Division by zero"); stack.push(ai % bi); break;
-                    case "gt": stack.push(ai > bi ? 1 : 0); break;
-                    case "lt": stack.push(ai < bi ? 1 : 0); break;
-                    case "ge": stack.push(ai >= bi ? 1 : 0); break;
-                    case "le": stack.push(ai <= bi ? 1 : 0); break;
-                    case "eq": stack.push(ai == bi ? 1 : 0); break;
+                    case "gt": stack.push(ai > bi); break;
+                    case "lt": stack.push(ai < bi); break;
+                    case "ge": stack.push(ai >= bi); break;
+                    case "le": stack.push(ai <= bi); break;
+                    case "eq": stack.push(ai == bi); break;
                     default: throw new RuntimeException("Unsupported int operation: " + op);
                 }
                 break;
@@ -204,11 +204,11 @@ public class StackMachine {
                     case "sub": stack.push(af - bf); break;
                     case "mul": stack.push(af * bf); break;
                     case "div": check(bf != 0.0f, "Division by zero"); stack.push(af / bf); break;
-                    case "gt": stack.push(af > bf ? 1 : 0); break;
-                    case "lt": stack.push(af < bf ? 1 : 0); break;
-                    case "ge": stack.push(af >= bf ? 1 : 0); break;
-                    case "le": stack.push(af <= bf ? 1 : 0); break;
-                    case "eq": stack.push(af == bf ? 1 : 0); break;
+                    case "gt": stack.push(af > bf); break;
+                    case "lt": stack.push(af < bf); break;
+                    case "ge": stack.push(af >= bf); break;
+                    case "le": stack.push(af <= bf); break;
+                    case "eq": stack.push(af == bf); break;
                     default: throw new RuntimeException("Unsupported float operation: " + op);
                 }
                 break;
@@ -216,7 +216,7 @@ public class StackMachine {
                 String sa = (String) a;
                 String sb = (String) b;
                 if ("eq".equals(op)) {
-                    stack.push(sa.equals(sb) ? 1 : 0);
+                    stack.push(sa.equals(sb));
                 } else if ("concat".equals(op)) {
                     stack.push(sa + sb);
                 } else {
@@ -227,7 +227,7 @@ public class StackMachine {
                 boolean ba = (Boolean) a;
                 boolean bb = (Boolean) b;
                 if ("eq".equals(op)) {
-                    stack.push(ba == bb ? 1 : 0);
+                    stack.push(ba == bb);
                 } else {
                     throw new RuntimeException("Unsupported boolean operation: " + op);
                 }
@@ -281,9 +281,14 @@ public class StackMachine {
 
     private void notOperation() {
         check(!stack.isEmpty(), "Stack underflow on NOT");
-        int a = (Integer) stack.pop();
-        stack.push((a == 0) ? 1 : 0);
+        Object a = stack.pop();
+        if (a instanceof Boolean bool) {
+            stack.push(!bool);
+        } else {
+            throw new RuntimeException("NOT applied to non-boolean");
+        }
     }
+
 
     private void itof() {
         check(!stack.isEmpty(), "Stack underflow on ITOF");
