@@ -1,5 +1,7 @@
-package cz.university;
+package cz.university.codegen;
 
+import cz.university.SymbolTable;
+import cz.university.TypeException;
 import cz.university.codegen.Instruction;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;

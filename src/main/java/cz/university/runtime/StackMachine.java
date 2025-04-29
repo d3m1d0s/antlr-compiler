@@ -1,4 +1,4 @@
-package cz.university;
+package cz.university.runtime;
 
 import cz.university.runtime.FileHandle;
 
