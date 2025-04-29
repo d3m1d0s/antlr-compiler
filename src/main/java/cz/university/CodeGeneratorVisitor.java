@@ -33,6 +33,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case "float" -> SymbolTable.Type.FLOAT;
             case "bool" -> SymbolTable.Type.BOOL;
             case "string" -> SymbolTable.Type.STRING;
+            case "file" -> SymbolTable.Type.FILE;
             default -> throw new RuntimeException("Unsupported type: " + typeText);
         };
 
@@ -58,6 +59,12 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                     instructions.add(new Instruction(Instruction.OpCode.PUSH_S, "\"\""));
                     instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
                 }
+                case FILE -> {
+                    instructions.add(new Instruction(Instruction.OpCode.PUSH_S, "\"\""));
+                    instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
+                    instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
+                }
+
             }
         }
 
@@ -100,12 +107,23 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                 addSaveInstruction(varType, var);
             }
 
-            instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
-            instructions.add(new Instruction(Instruction.OpCode.POP));
+            SymbolTable.Type firstVarType = null;
+            try {
+                firstVarType = symbolTable.getType(vars.get(0), ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            if (firstVarType != SymbolTable.Type.FILE) {
+                instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
+                instructions.add(new Instruction(Instruction.OpCode.POP));
+            }
+
         } else {
             type = visit(ctx.expr());
 
-            instructions.add(new Instruction(Instruction.OpCode.POP));
+            if (type != SymbolTable.Type.FILE) {
+                instructions.add(new Instruction(Instruction.OpCode.POP));
+            }
         }
 
         insideExpressionStatement = false;
@@ -505,17 +523,37 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
+        if (varType == SymbolTable.Type.FILE) {
+            instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
+            instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, varName));
+            return varType;
+        }
+
         if (!insideExpressionStatement) {
             addSaveInstruction(varType, varName);
-            return varType;
         }
 
         return varType;
     }
 
+    @Override
+    public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
+        SymbolTable.Type leftType = visit(ctx.left);
+        if (leftType != SymbolTable.Type.FILE) {
+            throw new RuntimeException("Left side of '<<' must be of type FILE");
+        }
 
+        SymbolTable.Type rightType = visit(ctx.right);
+        if (rightType != SymbolTable.Type.STRING &&
+                rightType != SymbolTable.Type.INT &&
+                rightType != SymbolTable.Type.FLOAT &&
+                rightType != SymbolTable.Type.BOOL) {
+            throw new RuntimeException("Right side of '<<' must be string, int, float, or bool");
+        }
 
-
+        instructions.add(new Instruction(Instruction.OpCode.FAPPEND));
+        return SymbolTable.Type.FILE; // filename remains on the stack
+    }
 
     private void addSaveInstruction(SymbolTable.Type type, String name) {
         switch (type) {
@@ -523,6 +561,10 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
             case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
             case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+            case FILE -> {
+                instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
+            }
         }
     }
 

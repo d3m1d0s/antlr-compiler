@@ -1,5 +1,10 @@
 package cz.university;
 
+import cz.university.runtime.FileHandle;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class StackMachine {
@@ -76,6 +81,12 @@ public class StackMachine {
                     break;
                 case "fjmp":
                     i = fjump(parts[1], i) - 1;
+                    break;
+                case "newfile":
+                    newFile();
+                    break;
+                case "fappend":
+                    fileAppend();
                     break;
                 default:
                     throw new RuntimeException("Unknown instruction: " + command);
@@ -331,4 +342,37 @@ public class StackMachine {
             throw new RuntimeException(errorMessage);
         }
     }
+
+    private void newFile() {
+        check(!stack.isEmpty(), "Stack underflow on NEWFILE");
+        Object value = stack.pop();
+        if (!(value instanceof String)) {
+            throw new RuntimeException("NEWFILE expects a string (filename)");
+        }
+        stack.push(new FileHandle((String) value));
+    }
+
+
+    private void fileAppend() {
+        check(stack.size() >= 2, "Stack underflow on FAPPEND");
+
+        Object value = stack.pop();
+        Object fileObject  = stack.pop();
+
+        if (!(fileObject instanceof FileHandle file)) {
+            throw new RuntimeException("Left side of FAPPEND must be a file handle, got: "
+                    + fileObject.getClass().getName()
+            );
+        }
+
+        try (PrintWriter out = new PrintWriter(new FileWriter(file.getName(), true))) {
+            out.print(value);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to append to file: " + e.getMessage());
+        }
+
+        // push back the file handle for chaining
+        stack.push(file);
+    }
+
 }

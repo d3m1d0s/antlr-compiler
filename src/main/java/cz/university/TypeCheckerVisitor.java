@@ -385,8 +385,18 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
     }
 
     private boolean isCompatible(SymbolTable.Type target, SymbolTable.Type value) {
-        return target == value || (target == SymbolTable.Type.FLOAT && value == SymbolTable.Type.INT);
+        if (target == value) {
+            return true;
+        }
+        if (target == SymbolTable.Type.FLOAT && value == SymbolTable.Type.INT) {
+            return true;
+        }
+        if (target == SymbolTable.Type.FILE && value == SymbolTable.Type.STRING) {
+            return true;
+        }
+        return false;
     }
+
 
     private SymbolTable.Type getTypeFromKeyword(String keyword) {
         if (keyword.equals("int")) return SymbolTable.Type.INT;
