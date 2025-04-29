@@ -1,12 +1,14 @@
-push S ""
-newfile
-save f
-push S "file_append_output2.txt"
-newfile
+push S "file_append_output.txt"
+fopen
 save f
 load f
 push S "Hello, "
-fappend
+fappend 1
 load f
 push S "World!"
-fappend
+fappend 1
+load f
+push I 1
+push S "A"
+push I 2
+fappend 3

@@ -1,12 +1,14 @@
 package cz.university;
 
 import cz.university.codegen.Instruction;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<SymbolTable.Type> {
@@ -60,9 +62,6 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                     instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
                 }
                 case FILE -> {
-                    instructions.add(new Instruction(Instruction.OpCode.PUSH_S, "\"\""));
-                    instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
-                    instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
                 }
 
             }
@@ -524,7 +523,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         }
 
         if (varType == SymbolTable.Type.FILE) {
-            instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
+            instructions.add(new Instruction(Instruction.OpCode.FOPEN));
             instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, varName));
             return varType;
         }
@@ -538,22 +537,39 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
 
     @Override
     public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
-        SymbolTable.Type leftType = visit(ctx.left);
-        if (leftType != SymbolTable.Type.FILE) {
-            throw new RuntimeException("Left side of '<<' must be of type FILE");
+        List<ParserRuleContext> exprs = new ArrayList<>();
+        cz.university.LanguageParser.ExprContext current = ctx;
+
+        while (current instanceof cz.university.LanguageParser.FileAppendExprContext appendCtx) {
+            exprs.add(((cz.university.LanguageParser.FileAppendExprContext) current).right);
+            current = ((cz.university.LanguageParser.FileAppendExprContext) current).left;
         }
 
-        SymbolTable.Type rightType = visit(ctx.right);
-        if (rightType != SymbolTable.Type.STRING &&
-                rightType != SymbolTable.Type.INT &&
-                rightType != SymbolTable.Type.FLOAT &&
-                rightType != SymbolTable.Type.BOOL) {
-            throw new RuntimeException("Right side of '<<' must be string, int, float, or bool");
+        SymbolTable.Type fileType = visit(current);
+        if (fileType != SymbolTable.Type.FILE) {
+            throw new RuntimeException("Left side of << must be FILE");
         }
 
-        instructions.add(new Instruction(Instruction.OpCode.FAPPEND));
-        return SymbolTable.Type.FILE; // filename remains on the stack
+        Collections.reverse(exprs);
+        for (ParserRuleContext arg : exprs) {
+            visit(arg);
+        }
+
+        instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N, String.valueOf(exprs.size())));
+        return SymbolTable.Type.FILE;
     }
+
+
+    private cz.university.LanguageParser.ExprContext collectFileAndValues(cz.university.LanguageParser.ExprContext expr, List<cz.university.LanguageParser.ExprContext> values) {
+        if (expr instanceof cz.university.LanguageParser.FileAppendExprContext fae) {
+            values.add(fae.right);
+            return collectFileAndValues(fae.left, values);
+        } else {
+            //it is expr which already contains file
+            return expr;
+        }
+    }
+
 
     private void addSaveInstruction(SymbolTable.Type type, String name) {
         switch (type) {
@@ -562,7 +578,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
             case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
             case FILE -> {
-                instructions.add(new Instruction(Instruction.OpCode.NEWFILE));
+                instructions.add(new Instruction(Instruction.OpCode.FOPEN));
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
             }
         }

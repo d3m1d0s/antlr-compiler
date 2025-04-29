@@ -82,11 +82,11 @@ public class StackMachine {
                 case "fjmp":
                     i = fjump(parts[1], i) - 1;
                     break;
-                case "newfile":
-                    newFile();
+                case "fopen":
+                    fopen();
                     break;
                 case "fappend":
-                    fileAppend();
+                    fappendN(Integer.parseInt(parts[1]));
                     break;
                 default:
                     throw new RuntimeException("Unknown instruction: " + command);
@@ -343,36 +343,43 @@ public class StackMachine {
         }
     }
 
-    private void newFile() {
-        check(!stack.isEmpty(), "Stack underflow on NEWFILE");
-        Object value = stack.pop();
-        if (!(value instanceof String)) {
-            throw new RuntimeException("NEWFILE expects a string (filename)");
+    private void fopen() {
+        check(stack.size() >= 1, "Stack underflow on FOPEN");
+
+        Object filename = stack.pop();
+        if (!(filename instanceof String)) {
+            throw new RuntimeException("FOPEN expects a string");
         }
-        stack.push(new FileHandle((String) value));
+
+        stack.push(new FileHandle((String) filename));
     }
 
+    private void fappendN(int n) {
+        check(stack.size() >= n + 1, "Stack underflow on FAPPEND " + n);
 
-    private void fileAppend() {
-        check(stack.size() >= 2, "Stack underflow on FAPPEND");
+        List<Object> values = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            values.add(stack.pop());
+        }
+        Collections.reverse(values);
 
-        Object value = stack.pop();
-        Object fileObject  = stack.pop();
-
+        Object fileObject = stack.pop();
         if (!(fileObject instanceof FileHandle file)) {
-            throw new RuntimeException("Left side of FAPPEND must be a file handle, got: "
-                    + fileObject.getClass().getName()
-            );
+            throw new RuntimeException("Left side of FAPPEND must be a file handle");
         }
 
         try (PrintWriter out = new PrintWriter(new FileWriter(file.getName(), true))) {
-            out.print(value);
+            for (Object v : values) {
+                out.print(v);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Failed to append to file: " + e.getMessage());
         }
 
-        // push back the file handle for chaining
-        stack.push(file);
+        // for chaining
+        stack.push(fileObject);
     }
+
+
 
 }

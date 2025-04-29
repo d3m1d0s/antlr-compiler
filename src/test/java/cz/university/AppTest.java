@@ -680,16 +680,17 @@ public class AppTest {
         f = "file_append_output.txt";
         f << "Hello, ";
         f << "World!";
+        f << 1 << "A" << 2;
         """;
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
 
         List<String> expected = List.of(
-                "push S \"\"", "newfile", "save f",
-                "push S \"file_append_output.txt\"", "newfile", "save f",
-                "load f", "push S \"Hello, \"", "fappend",
-                "load f", "push S \"World!\"", "fappend"
+                "push S \"file_append_output.txt\"", "fopen", "save f",
+                "load f", "push S \"Hello, \"", "fappend 1",
+                "load f", "push S \"World!\"", "fappend 1",
+                "load f", "push I 1", "push S \"A\"", "push I 2", "fappend 3"
         );
 
         for (int i = 0; i < expected.size(); i++) {

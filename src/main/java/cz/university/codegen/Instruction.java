@@ -26,8 +26,8 @@ public class Instruction {
         FJMP,
         PRINT,
         READ_I, READ_F, READ_S, READ_B,
-        NEWFILE,
-        FAPPEND
+        FOPEN,
+        FAPPEND_N,
     }
 
     private final OpCode opCode;
@@ -59,9 +59,11 @@ public class Instruction {
             case LABEL:
             case JMP:
             case FJMP:
-            case NEWFILE:
-            case FAPPEND:
                 return operand != null ? opCode.name().toLowerCase() + " " + operand : opCode.name().toLowerCase();
+
+            case FAPPEND_N:
+                return operand != null ? "fappend " + operand : "fappend";
+
 
             case SAVE_I:
             case SAVE_F:
