@@ -37,6 +37,7 @@ expr
     | op='-' expr                                      # unaryMinusExpr
     | left=expr op='<<' right=expr                     # fileAppendExpr
     | left=IDENTIFIER '=' right=expr                   # assignExpr
+    | 'open' '(' STRING ',' STRING ')'                 # fileOpenExpr
     | '(' expr ')'                                     # parenExpr
     | IDENTIFIER                                       # idExpr
     | INT                                              # intExpr

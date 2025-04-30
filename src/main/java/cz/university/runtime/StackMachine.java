@@ -83,7 +83,8 @@ public class StackMachine {
                     i = fjump(parts[1], i) - 1;
                     break;
                 case "fopen":
-                    fopen();
+                    //fopen();
+                    executeFileOpen();
                     break;
                 case "fappend":
                     fappendN(Integer.parseInt(parts[1]));
@@ -343,12 +344,24 @@ public class StackMachine {
         }
     }
 
-    private void fopen() {
-        check(stack.size() >= 1, "Stack underflow on FOPEN");
+//    private void fopen() {
+//        check(stack.size() >= 1, "Stack underflow on FOPEN");
+//
+//        Object filename = stack.pop();
+//        if (!(filename instanceof String)) {
+//            throw new RuntimeException("FOPEN expects a string");
+//        }
+//
+//        stack.push(new FileHandle((String) filename));
+//    }
+
+    private void executeFileOpen() {
+        check(stack.size() >= 1, "Stack underflow on FILE OPEN");
 
         Object filename = stack.pop();
+
         if (!(filename instanceof String)) {
-            throw new RuntimeException("FOPEN expects a string");
+            throw new RuntimeException("FILE OPEN expects a string filename");
         }
 
         stack.push(new FileHandle((String) filename));

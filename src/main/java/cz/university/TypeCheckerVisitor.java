@@ -365,9 +365,10 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         }
     }
 
-
-
-
+    @Override
+    public SymbolTable.Type visitFileOpenExpr(cz.university.LanguageParser.FileOpenExprContext ctx) {
+        return SymbolTable.Type.FILE;
+    }
 
     // === Helpers ===
 
@@ -396,7 +397,6 @@ public class TypeCheckerVisitor extends cz.university.LanguageBaseVisitor<Symbol
         }
         return false;
     }
-
 
     private SymbolTable.Type getTypeFromKeyword(String keyword) {
         if (keyword.equals("int")) return SymbolTable.Type.INT;

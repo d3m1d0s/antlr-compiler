@@ -27,6 +27,7 @@ public class Instruction {
         PRINT,
         READ_I, READ_F, READ_S, READ_B,
         FOPEN,
+        FWRITE,
         FAPPEND_N,
     }
 

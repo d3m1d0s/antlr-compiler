@@ -1,5 +1,5 @@
 file f;
-f = "file_append_output.txt";
-f << "Hello, ";
-f << "World!";
-f << 1 << "A" << 2;
+f = open("output12345.txt", "a");
+f << "Line 1" << 42;
+f = open("output12345.txt", "w");
+f << "Overwrite";

@@ -673,31 +673,66 @@ public class AppTest {
         }
     }
 
+//    @Test
+//    public void testFileAppendExpr() {
+//        System.out.println("---- testFileAppendExpr ----");
+//        String input = """
+//        file f;
+//        f = "file_append_output.txt";
+//        f << "Hello, ";
+//        f << "World!";
+//        f << 1 << "A" << 2;
+//        """;
+//
+//        List<Instruction> instr = generate(input);
+//        instr.forEach(System.out::println);
+//
+//        List<String> expected = List.of(
+//                "push S \"file_append_output.txt\"", "fopen", "save f",
+//                "load f", "push S \"Hello, \"", "fappend 1",
+//                "load f", "push S \"World!\"", "fappend 1",
+//                "load f", "push I 1", "push S \"A\"", "push I 2", "fappend 3"
+//        );
+//
+//        for (int i = 0; i < expected.size(); i++) {
+//            assertEquals(expected.get(i), instr.get(i).toString());
+//        }
+//    }
+
     @Test
-    public void testFileAppendExpr() {
-        System.out.println("---- testFileAppendExpr ----");
+    public void testFileOpenAndAppend() {
+        System.out.println("---- testFileOpenAndAppend ----");
         String input = """
         file f;
-        f = "file_append_output.txt";
-        f << "Hello, ";
-        f << "World!";
-        f << 1 << "A" << 2;
+        f = open("output.txt", "a");
+        f << "Line 1" << 42;
+        f = open("output.txt", "w");
+        f << "Overwrite";
         """;
 
         List<Instruction> instr = generate(input);
         instr.forEach(System.out::println);
 
         List<String> expected = List.of(
-                "push S \"file_append_output.txt\"", "fopen", "save f",
-                "load f", "push S \"Hello, \"", "fappend 1",
-                "load f", "push S \"World!\"", "fappend 1",
-                "load f", "push I 1", "push S \"A\"", "push I 2", "fappend 3"
+
+                // f = open("output.txt", "a")
+                "push S output.txt", "fappend", "save f",
+
+                // f << "Line 1" << 42
+                "load f", "push S \"Line 1\"", "push I 42", "fappend 2",
+
+                // f = open("output.txt", "w")
+                "push S output.txt", "fwrite", "save f",
+
+                // f << "Overwrite"
+                "load f", "push S \"Overwrite\"", "fappend 1"
         );
 
         for (int i = 0; i < expected.size(); i++) {
             assertEquals(expected.get(i), instr.get(i).toString());
         }
     }
+
 
     @Test
     public void testAllInputsAgainstReferenceOutputs() throws IOException {

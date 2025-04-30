@@ -1,5 +1,6 @@
 package cz.university.codegen;
 
+import cz.university.LanguageParser;
 import cz.university.SymbolTable;
 import cz.university.TypeException;
 import cz.university.codegen.Instruction;
@@ -525,7 +526,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         }
 
         if (varType == SymbolTable.Type.FILE) {
-            instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+            //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
             instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, varName));
             return varType;
         }
@@ -561,6 +562,28 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         return SymbolTable.Type.FILE;
     }
 
+    @Override
+    public SymbolTable.Type visitFileOpenExpr(cz.university.LanguageParser.FileOpenExprContext ctx) {
+        String filename = ctx.STRING(0).getText();
+        String mode = ctx.STRING(1).getText();
+
+        filename = filename.substring(1, filename.length() - 1);
+        mode = mode.substring(1, mode.length() - 1);
+
+        instructions.add(new Instruction(Instruction.OpCode.PUSH_S, filename));
+
+        if (mode.equals("w")) {
+            instructions.add(new Instruction(Instruction.OpCode.FWRITE));
+        } else if (mode.equals("a")) {
+            instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N));
+        } else {
+            throw new RuntimeException("Invalid mode in open(): " + mode);
+        }
+
+        return SymbolTable.Type.FILE;
+    }
+
+
 
     private cz.university.LanguageParser.ExprContext collectFileAndValues(cz.university.LanguageParser.ExprContext expr, List<cz.university.LanguageParser.ExprContext> values) {
         if (expr instanceof cz.university.LanguageParser.FileAppendExprContext fae) {
@@ -580,7 +603,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
             case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
             case FILE -> {
-                instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+                //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
             }
         }

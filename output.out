@@ -1,14 +1,13 @@
-push S "file_append_output.txt"
-fopen
+push S output12345.txt
+fappend
 save f
 load f
-push S "Hello, "
-fappend 1
+push S "Line 1"
+push I 42
+fappend 2
+push S output12345.txt
+fwrite
+save f
 load f
-push S "World!"
+push S "Overwrite"
 fappend 1
-load f
-push I 1
-push S "A"
-push I 2
-fappend 3
