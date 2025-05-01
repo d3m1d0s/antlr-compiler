@@ -1,9 +1,7 @@
 package cz.university.codegen;
 
-import cz.university.LanguageParser;
 import cz.university.SymbolTable;
 import cz.university.TypeException;
-import cz.university.codegen.Instruction;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -19,6 +17,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     private final SymbolTable symbolTable;
     private final List<Instruction> instructions = new ArrayList<>();
     private boolean insideExpressionStatement = false;
+    private boolean writeInstruction = false;
     private int labelCounter = 0;
 
 
@@ -558,7 +557,11 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             visit(arg);
         }
 
-        instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N, String.valueOf(exprs.size())));
+        if (!writeInstruction) {
+            instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N, String.valueOf(exprs.size())));
+        } else {
+            instructions.add(new Instruction(Instruction.OpCode.FWRITE, String.valueOf(exprs.size())));
+        }
         return SymbolTable.Type.FILE;
     }
 
@@ -571,14 +574,15 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         mode = mode.substring(1, mode.length() - 1);
 
         instructions.add(new Instruction(Instruction.OpCode.PUSH_S, filename));
-
+        instructions.add(new Instruction(Instruction.OpCode.PUSH_S, mode));
         if (mode.equals("w")) {
-            instructions.add(new Instruction(Instruction.OpCode.FWRITE));
+            writeInstruction = true;
         } else if (mode.equals("a")) {
-            instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N));
+            writeInstruction = false;
         } else {
             throw new RuntimeException("Invalid mode in open(): " + mode);
         }
+        instructions.add(new Instruction(Instruction.OpCode.FOPEN));
 
         return SymbolTable.Type.FILE;
     }

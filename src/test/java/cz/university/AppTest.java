@@ -716,16 +716,16 @@ public class AppTest {
         List<String> expected = List.of(
 
                 // f = open("output.txt", "a")
-                "push S output.txt", "fappend", "save f",
+                "push S output.txt", "push S a", "fopen", "save f",
 
                 // f << "Line 1" << 42
                 "load f", "push S \"Line 1\"", "push I 42", "fappend 2",
 
                 // f = open("output.txt", "w")
-                "push S output.txt", "fwrite", "save f",
+                "push S output.txt", "push S w", "fopen", "save f",
 
                 // f << "Overwrite"
-                "load f", "push S \"Overwrite\"", "fappend 1"
+                "load f", "push S \"Overwrite\"", "fwrite 1"
         );
 
         for (int i = 0; i < expected.size(); i++) {

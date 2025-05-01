@@ -1,5 +1,5 @@
 push S output12345.txt
-fappend
+fopen
 save f
 load f
 push S "Line 1"
