@@ -352,13 +352,20 @@ public class StackMachine {
     private void fopen() {
         check(!stack.isEmpty(), "Stack underflow on FOPEN");
 
-        Object mode = stack.pop();
-        Object filename = stack.pop();
+        Object top = stack.pop();
 
-        check(filename instanceof String,"FOPEN expects a string");
-        check(mode instanceof String, "FOPEN expects string mode");
+        if (stack.isEmpty()) {
+            check(top instanceof String, "FOPEN expects string filename");
+            stack.push(new FileHandle((String) top, "a"));
+        } else {
+            Object filename = stack.pop();
+            Object mode = top;
 
-        stack.push(new FileHandle((String) filename, (String) mode));
+            check(filename instanceof String, "FOPEN expects string filename");
+            check(mode instanceof String, "FOPEN expects string mode");
+
+            stack.push(new FileHandle((String) filename, (String) mode));
+        }
     }
 
     private void fappendN(int n) {

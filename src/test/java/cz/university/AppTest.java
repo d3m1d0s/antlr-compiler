@@ -673,31 +673,31 @@ public class AppTest {
         }
     }
 
-//    @Test
-//    public void testFileAppendExpr() {
-//        System.out.println("---- testFileAppendExpr ----");
-//        String input = """
-//        file f;
-//        f = "file_append_output.txt";
-//        f << "Hello, ";
-//        f << "World!";
-//        f << 1 << "A" << 2;
-//        """;
-//
-//        List<Instruction> instr = generate(input);
-//        instr.forEach(System.out::println);
-//
-//        List<String> expected = List.of(
-//                "push S \"file_append_output.txt\"", "fopen", "save f",
-//                "load f", "push S \"Hello, \"", "fappend 1",
-//                "load f", "push S \"World!\"", "fappend 1",
-//                "load f", "push I 1", "push S \"A\"", "push I 2", "fappend 3"
-//        );
-//
-//        for (int i = 0; i < expected.size(); i++) {
-//            assertEquals(expected.get(i), instr.get(i).toString());
-//        }
-//    }
+    @Test
+    public void testFileAppendExpr() {
+        System.out.println("---- testFileAppendExpr ----");
+        String input = """
+        file f;
+        f = "file_append_output.txt";
+        f << "Hello, ";
+        f << "World!";
+        f << 1 << "A" << 2;
+        """;
+
+        List<Instruction> instr = generate(input);
+        instr.forEach(System.out::println);
+
+        List<String> expected = List.of(
+                "push S \"file_append_output.txt\"", "fopen", "save f",
+                "load f", "push S \"Hello, \"", "fappend 1",
+                "load f", "push S \"World!\"", "fappend 1",
+                "load f", "push I 1", "push S \"A\"", "push I 2", "fappend 3"
+        );
+
+        for (int i = 0; i < expected.size(); i++) {
+            assertEquals(expected.get(i), instr.get(i).toString());
+        }
+    }
 
     @Test
     public void testFileOpenAndAppend() {

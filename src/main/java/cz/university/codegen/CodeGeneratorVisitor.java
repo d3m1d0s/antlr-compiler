@@ -582,7 +582,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
         } else {
             throw new RuntimeException("Invalid mode in open(): " + mode);
         }
-        instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+        //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
 
         return SymbolTable.Type.FILE;
     }
@@ -607,7 +607,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
             case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
             case FILE -> {
-                //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+                instructions.add(new Instruction(Instruction.OpCode.FOPEN));
                 instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
             }
         }
