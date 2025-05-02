@@ -83,11 +83,13 @@ public class StackMachine {
                     i = fjump(parts[1], i) - 1;
                     break;
                 case "fopen":
-                    //fopen();
-                    executeFileOpen();
+                    fopen();
                     break;
                 case "fappend":
                     fappendN(Integer.parseInt(parts[1]));
+                    break;
+                case "fwrite":
+                    fwrite(Integer.parseInt(parts[1]));
                     break;
                 default:
                     throw new RuntimeException("Unknown instruction: " + command);
@@ -116,7 +118,10 @@ public class StackMachine {
                 stack.push(Float.parseFloat(value));
                 break;
             case "S":
-                stack.push(value.substring(1, value.length() - 1));
+                if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                stack.push(value);
                 break;
             case "B":
                 stack.push(Boolean.parseBoolean(value));
@@ -344,31 +349,20 @@ public class StackMachine {
         }
     }
 
-//    private void fopen() {
-//        check(stack.size() >= 1, "Stack underflow on FOPEN");
-//
-//        Object filename = stack.pop();
-//        if (!(filename instanceof String)) {
-//            throw new RuntimeException("FOPEN expects a string");
-//        }
-//
-//        stack.push(new FileHandle((String) filename));
-//    }
+    private void fopen() {
+        check(!stack.isEmpty(), "Stack underflow on FOPEN");
 
-    private void executeFileOpen() {
-        check(stack.size() >= 1, "Stack underflow on FILE OPEN");
-
+        Object mode = stack.pop();
         Object filename = stack.pop();
 
-        if (!(filename instanceof String)) {
-            throw new RuntimeException("FILE OPEN expects a string filename");
-        }
+        check(filename instanceof String,"FOPEN expects a string");
+        check(mode instanceof String, "FOPEN expects string mode");
 
-        stack.push(new FileHandle((String) filename));
+        stack.push(new FileHandle((String) filename, (String) mode));
     }
 
     private void fappendN(int n) {
-        check(stack.size() >= n + 1, "Stack underflow on FAPPEND " + n);
+        check(stack.size() >= n + 1, "Stack underflow on FAPPEND");
 
         List<Object> values = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -376,21 +370,45 @@ public class StackMachine {
         }
         Collections.reverse(values);
 
-        Object fileObject = stack.pop();
-        if (!(fileObject instanceof FileHandle file)) {
-            throw new RuntimeException("Left side of FAPPEND must be a file handle");
-        }
+        Object handle = stack.pop();
+        check(handle instanceof FileHandle, "FAPPEND expects a FileHandle");
 
-        try (PrintWriter out = new PrintWriter(new FileWriter(file.getName(), true))) {
-            for (Object v : values) {
-                out.print(v);
+        FileHandle fileHandle = (FileHandle) handle;
+
+        try (FileWriter fw = new FileWriter(fileHandle.getName(), true);
+             PrintWriter writer = new PrintWriter(fw)) {
+            for (Object val : values) {
+                writer.print(val);
             }
+            writer.println();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to append to file: " + e.getMessage());
+            throw new RuntimeException("Failed to append to file: " + fileHandle.getName());
         }
+    }
 
-        // for chaining
-        stack.push(fileObject);
+    private void fwrite(int n) {
+        check(stack.size() >= n + 1, "Stack underflow on FWRITE");
+
+        List<Object> values = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            values.add(stack.pop());
+        }
+        Collections.reverse(values);
+
+        Object handle = stack.pop();
+        check(handle instanceof FileHandle, "FWRITE expects a FileHandle");
+
+        FileHandle fileHandle = (FileHandle) handle;
+
+        try (FileWriter fw = new FileWriter(fileHandle.getName(), false);
+             PrintWriter writer = new PrintWriter(fw)) {
+            for (Object val : values) {
+                writer.print(val);
+            }
+            writer.println();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write to file: " + fileHandle.getName());
+        }
     }
 
 

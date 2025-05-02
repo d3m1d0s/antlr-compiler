@@ -66,6 +66,9 @@ public class Instruction {
             case FAPPEND_N:
                 return operand != null ? "fappend " + operand : "fappend";
 
+            case FWRITE:
+                return operand != null ? "fwrite " + operand : "fwrite";
+
 
             case SAVE_I:
             case SAVE_F:

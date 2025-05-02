@@ -2,9 +2,11 @@ package cz.university.runtime;
 
 public class FileHandle {
     private final String name;
+    private final String mode;
 
-    public FileHandle(String name) {
+    public FileHandle(String name, String mode) {
         this.name = name;
+        this.mode = mode;
     }
 
     public String getName() {

@@ -1,5 +1,9 @@
 file f;
-f = open("output12345.txt", "a");
+f = open("SM_output_a_w.txt", "a");
 f << "Line 1" << 42;
-f = open("output12345.txt", "w");
+f = open("SM_output_a_w.txt", "w");
 f << "Overwrite";
+f = open("SM_output_w_a.txt", "w");
+f << "Overwrite" << 78;
+f = open("SM_output_w_a.txt", "a");
+f << "Next Line";
