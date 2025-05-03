@@ -44,47 +44,73 @@ This project simulates the process of creating a simple stack-based programming 
 
 ## 🧠 Features
 
-- Custom grammar (`Language.g4`) for a small typed programming language
-- **Fully featured type system**: `int`, `float`, `bool`, `string`
-- **Automatic int → float type promotion** inside expressions
-- **Clear operator precedence** and associativity handling
-- **Syntactic and semantic error reporting**
-- **Stack-based Virtual Machine** with custom instruction set:
-  - Arithmetic operations
-  - Logical operations
-  - Comparisons
-  - String operations
-  - Variable assignments
-  - Control flow (`if`, `while`, `for`)
-  - I/O operations (`read`, `write`)
-- **Code modularity**: clear separation between parsing, type checking, code generation, and execution
-- Designed with **expandability** in mind (easy to add new features)
+This compiler project supports a rich subset of imperative programming features:
+* **Typed language design**
+  Includes primitive types: `int`, `float`, `bool`, `string`, and `file`.
+  Supports automatic promotion from `int` to `float` in expressions.
+* **Comprehensive expression support**
+  Arithmetic (`+`, `-`, `*`, `/`, `%`), logical (`&&`, `||`, `!`), comparison (`<`, `>`, `==`, `!=`), string concatenation (`.`), and file append (`<<`) operators are available with correct precedence and associativity.
+* **Statements and control flow**
+  Includes variable declarations, assignments, input/output (`read`, `write`), and structured control flow via `if`, `else`, `while`, and `for`.
+* **Block scoping and semantic validation**
+  Uses a symbol table and static type checker to ensure correctness at compile time, with meaningful error messages and line references.
+* **File I/O system**
+  The `file` type allows working with files using simple, expressive syntax:
+  * `f = open("file.txt", "w");` to overwrite, or `"a"` to append
+  * `f << "data" << 123;` to chain file output
+    These are compiled into stack-based instructions (`push`, `fwrite`, `fappend N`).
+* **Intermediate representation and VM**
+  Generates stack-based code with a minimal instruction set. The virtual machine executes the code by interpreting instructions like `push`, `load`, `save`, `fappend`, `print`, `jmp`, and more.
+* **Modular and extensible architecture**
+  Clean separation between the parser, type checker, code generator, and VM makes it easy to add new features, types, or constructs.
 
 ---
 
 ## 📄 Language Specification (Mini-Lang)
 
-**Data types**: `int`, `float`, `bool`, `string`  
+**Data types**: `int`, `float`, `bool`, `string`, `file`
 **Statements**:
-- Variable declarations
-- Assignments
-- Input/Output (`read`, `write`)
-- Control flow (`if`, `else`, `while`, `for`)
-- Blocks (`{ ... }`)
-- Empty statements (`;`)
+
+* Variable declarations
+* Assignments
+* Input/Output (`read`, `write`)
+* File I/O:
+  * `file f;`
+  * `f = open("filename.txt", "w" | "a");`
+  * `f << "some text" << 123;`
+* Control flow (`if`, `else`, `while`, `for`)
+* Blocks (`{ ... }`)
+* Empty statements (`;`)
 
 **Expressions**:
-- Arithmetic: `+`, `-`, `*`, `/`, `%`
-- Logical: `&&`, `||`, `!`
-- Comparison: `<`, `>`, `==`, `!=`
-- String concatenation: `.`
-- Type coercion: automatic int → float
+
+* Arithmetic: `+`, `-`, `*`, `/`, `%`
+* Logical: `&&`, `||`, `!`
+* Comparison: `<`, `>`, `==`, `!=`
+* String concatenation: `.`
+* File appending: `<<`
+* Type coercion: automatic int → float
 
 **Comments**: `// single line comment`
 
 ---
 
 ## 📚 Example
+
+```c
+file f;
+f = open("log.txt", "a");
+f << "Session started: " << 2025;
+
+int i;
+i = 0;
+while (i < 3) {
+    f << "Line " << i;
+    i = i + 1;
+}
+```
+
+This example appends multiple lines to the file `log.txt`, demonstrating file declaration, opening, appending data, and control flow.
 
 ---
 
@@ -109,18 +135,34 @@ This project simulates the process of creating a simple stack-based programming 
 
 ```
 AntlrCompiler/
- ├── src/
- │    ├── main/
- │    │    ├── antlr4/         # Language grammar (Language.g4)
- │    │    └── java/cz/university/
- │    │         ├── App.java           # Main entry point
- │    │         ├── StackMachine.java  # Virtual machine
- │    │         ├── CodeGeneratorVisitor.java # Code generator
- │    │         ├── TypeCheckerVisitor.java   # Type checker
- │    │         └── SymbolTable.java    # Variable/type management
- │    └── test/resources/  # Test programs (.lang)
- └── pom.xml               # Maven configuration
-```
+├── src/
+│   ├── main/
+│   │   ├── antlr4/
+│   │   │   └── cz/university/
+│   │   │       └── Language.g4             # Grammar definition
+│   │   └── java/cz/university/
+│   │       ├── App.java                    # Main entry point
+│   │       ├── SymbolTable.java            # Variable/type management
+│   │       ├── TypeCheckerVisitor.java     # Type checking
+│   │       ├── TypeException.java          # Type error handling
+│   │       ├── VerboseListener.java        # Custom ANTLR error listener
+│   │       ├── codegen/
+│   │       │   ├── CodeGeneratorVisitor.java  # Stack-based code generation
+│   │       │   └── Instruction.java           # Instruction model
+│   │       └── runtime/
+│   │           ├── StackMachine.java       # Stack-based virtual machine
+│   │           └── FileHandle.java         # File handle abstraction
+│
+├── test/
+│   ├── java/cz/university/
+│   │   └── AppTest.java                    # JUnit test cases
+│   └── resources/
+│       ├── PLC_t1.in / .out                # Input/output test cases
+│       ├── PLC_t2.in / .out
+│       ├── PLC_t3.in / .out
+│       └── test.lang                       # Custom sample program
+│
+└── pom.xml                                 # Maven build configuration
 
 ## 💬 Contact
 
