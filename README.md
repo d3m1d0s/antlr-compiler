@@ -109,19 +109,35 @@ This project simulates the process of creating a simple stack-based programming 
 
 ```
 AntlrCompiler/
- ├── src/
- │    ├── main/
- │    │    ├── antlr4/         # Language grammar (Language.g4)
- │    │    └── java/cz/university/
- │    │         ├── App.java           # Main entry point
- │    │         ├── StackMachine.java  # Virtual machine
- │    │         ├── CodeGeneratorVisitor.java # Code generator
- │    │         ├── TypeCheckerVisitor.java   # Type checker
- │    │         └── SymbolTable.java    # Variable/type management
- │    └── test/resources/  # Test programs (.lang)
- └── pom.xml               # Maven configuration
+├── src/
+│   ├── main/
+│   │   ├── antlr4/
+│   │   │   └── cz/university/
+│   │   │       └── Language.g4             # Grammar definition
+│   │   └── java/cz/university/
+│   │       ├── App.java                    # Main entry point
+│   │       ├── SymbolTable.java            # Variable/type management
+│   │       ├── TypeCheckerVisitor.java     # Type checking
+│   │       ├── TypeException.java          # Type error handling
+│   │       ├── VerboseListener.java        # Custom ANTLR error listener
+│   │       ├── codegen/
+│   │       │   ├── CodeGeneratorVisitor.java  # Stack-based code generation
+│   │       │   └── Instruction.java           # Instruction model
+│   │       └── runtime/
+│   │           ├── StackMachine.java       # Stack-based virtual machine
+│   │           └── FileHandle.java         # File handle abstraction
+│
+├── test/
+│   ├── java/cz/university/
+│   │   └── AppTest.java                    # JUnit test cases
+│   └── resources/
+│       ├── PLC_t1.in / .out                # Input/output test cases
+│       ├── PLC_t2.in / .out
+│       ├── PLC_t3.in / .out
+│       └── test.lang                       # Custom sample program
+│
+└── pom.xml                                 # Maven build configuration
 ```
-
 ## 💬 Contact
 
 If you are interested in collaboration or have any questions, feel free to reach out.
