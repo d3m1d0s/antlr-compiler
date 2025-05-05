@@ -47,19 +47,24 @@ This project simulates the process of creating a simple stack-based programming 
 This compiler project supports a rich subset of imperative programming features:
 
 * **Typed language design**
+
   Includes primitive types: `int`, `float`, `bool`, `string`, and `file`.
   Supports automatic promotion from `int` to `float` in expressions.
 
 * **Comprehensive expression support**
+
   Arithmetic (`+`, `-`, `*`, `/`, `%`), logical (`&&`, `||`, `!`), comparison (`<`, `>`, `==`, `!=`), string concatenation (`.`), and file append (`<<`) operators are available with correct precedence and associativity.
 
 * **Statements and control flow**
+
   Includes variable declarations, assignments, input/output (`read`, `write`), and structured control flow via `if`, `else`, `while`, and `for`.
 
 * **Block scoping and semantic validation**
+
   Uses a symbol table and static type checker to ensure correctness at compile time, with meaningful error messages and line references.
 
 * **File I/O system**
+
   The `file` type allows working with files using simple, expressive syntax:
 
   * `f = open("file.txt", "w");` to overwrite, or `"a"` to append
@@ -67,9 +72,11 @@ This compiler project supports a rich subset of imperative programming features:
     These are compiled into stack-based instructions (`push`, `fwrite`, `fappend N`).
 
 * **Intermediate representation and VM**
+
   Generates stack-based code with a minimal instruction set. The virtual machine executes the code by interpreting instructions like `push`, `load`, `save`, `fappend`, `print`, `jmp`, and more.
 
 * **Modular and extensible architecture**
+
   Clean separation between the parser, type checker, code generator, and VM makes it easy to add new features, types, or constructs.
 
 ---
