@@ -105,6 +105,21 @@ This compiler project supports a rich subset of imperative programming features:
 
 ## 📚 Example
 
+```c
+file f;
+f = open("log.txt", "a");
+f << "Session started: " << 2025;
+
+int i;
+i = 0;
+while (i < 3) {
+    f << "Line " << i;
+    i = i + 1;
+}
+```
+
+This example appends multiple lines to the file `log.txt`, demonstrating file declaration, opening, appending data, and control flow.
+
 ---
 
 ## 🚀 How to Build and Run
