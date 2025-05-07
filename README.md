@@ -83,21 +83,27 @@ This compiler project supports a rich subset of imperative programming features:
 
 ## 📄 Language Specification (Mini-Lang)
 
-**Data types**: `int`, `float`, `bool`, `string`  
+**Data types**: `int`, `float`, `bool`, `string`, `file`
+
 **Statements**:
-- Variable declarations
-- Assignments
-- Input/Output (`read`, `write`)
-- Control flow (`if`, `else`, `while`, `for`)
-- Blocks (`{ ... }`)
-- Empty statements (`;`)
+* Variable declarations
+* Assignments
+* Input/Output (`read`, `write`)
+* File I/O:
+  * `file f;`
+  * `f = open("filename.txt", "w" | "a");`
+  * `f << "some text" << 123;`
+* Control flow (`if`, `else`, `while`, `for`)
+* Blocks (`{ ... }`)
+* Empty statements (`;`)
 
 **Expressions**:
-- Arithmetic: `+`, `-`, `*`, `/`, `%`
-- Logical: `&&`, `||`, `!`
-- Comparison: `<`, `>`, `==`, `!=`
-- String concatenation: `.`
-- Type coercion: automatic int → float
+* Arithmetic: `+`, `-`, `*`, `/`, `%`
+* Logical: `&&`, `||`, `!`
+* Comparison: `<`, `>`, `==`, `!=`
+* String concatenation: `.`
+* File appending: `<<`
+* Type coercion: automatic int → float
 
 **Comments**: `// single line comment`
 
