@@ -128,7 +128,58 @@ This example appends multiple lines to the file `log.txt`, demonstrating file de
 
 ---
 
+
+
 ## 🚀 How to Build and Run
+
+### Prerequisites 
+
+* Java 17 or higher
+* Maven 3.x
+* ANTLR plugin (automatically handled by Maven)
+
+### Build the Project 
+
+In the root directory of the project, run:
+
+```bash
+mvn clean package
+```
+
+This compiles the project, generates ANTLR classes, and builds the `.jar`.
+
+### Run a Program 
+
+To compile and execute a `.lang` source file:
+
+```bash
+mvn exec:java -Dexec.mainClass=cz.university.App 
+```
+For PowerShell:
+
+```powershell
+mvn exec:java "-Dexec.mainClass=cz.university.App" 
+```
+
+This will:
+
+1. Parse the input file.
+2. Type-check it.
+3. Generate stack-based instructions into `output.out`.
+4. Execute the program via the built-in virtual machine.
+
+### Run Unit Tests 
+
+To run the included JUnit tests:
+
+```bash
+mvn test
+```
+
+Test cases are defined in `AppTest.java`, including validation of code generation and file operations.
+
+
+
 
 ---
 
