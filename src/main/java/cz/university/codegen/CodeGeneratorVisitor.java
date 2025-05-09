@@ -1,12 +1,15 @@
-package cz.university;
+package cz.university.codegen;
 
-import cz.university.codegen.Instruction;
+import cz.university.SymbolTable;
+import cz.university.TypeException;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<SymbolTable.Type> {
@@ -14,6 +17,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
     private final SymbolTable symbolTable;
     private final List<Instruction> instructions = new ArrayList<>();
     private boolean insideExpressionStatement = false;
+    private boolean writeInstruction = false;
     private int labelCounter = 0;
 
 
@@ -33,6 +37,7 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case "float" -> SymbolTable.Type.FLOAT;
             case "bool" -> SymbolTable.Type.BOOL;
             case "string" -> SymbolTable.Type.STRING;
+            case "file" -> SymbolTable.Type.FILE;
             default -> throw new RuntimeException("Unsupported type: " + typeText);
         };
 
@@ -58,6 +63,9 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                     instructions.add(new Instruction(Instruction.OpCode.PUSH_S, "\"\""));
                     instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
                 }
+                case FILE -> {
+                }
+
             }
         }
 
@@ -100,12 +108,23 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
                 addSaveInstruction(varType, var);
             }
 
-            instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
-            instructions.add(new Instruction(Instruction.OpCode.POP));
+            SymbolTable.Type firstVarType = null;
+            try {
+                firstVarType = symbolTable.getType(vars.get(0), ctx.getStart().getLine());
+            } catch (TypeException e) {
+                throw new RuntimeException(e);
+            }
+            if (firstVarType != SymbolTable.Type.FILE) {
+                instructions.add(new Instruction(Instruction.OpCode.LOAD, vars.get(0)));
+                instructions.add(new Instruction(Instruction.OpCode.POP));
+            }
+
         } else {
             type = visit(ctx.expr());
 
-            instructions.add(new Instruction(Instruction.OpCode.POP));
+            if (type != SymbolTable.Type.FILE) {
+                instructions.add(new Instruction(Instruction.OpCode.POP));
+            }
         }
 
         insideExpressionStatement = false;
@@ -505,16 +524,80 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             instructions.add(new Instruction(Instruction.OpCode.ITOF));
         }
 
+        if (varType == SymbolTable.Type.FILE) {
+            //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+            instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, varName));
+            return varType;
+        }
+
         if (!insideExpressionStatement) {
             addSaveInstruction(varType, varName);
-            return varType;
         }
 
         return varType;
     }
 
+    @Override
+    public SymbolTable.Type visitFileAppendExpr(cz.university.LanguageParser.FileAppendExprContext ctx) {
+        List<ParserRuleContext> exprs = new ArrayList<>();
+        cz.university.LanguageParser.ExprContext current = ctx;
+
+        while (current instanceof cz.university.LanguageParser.FileAppendExprContext appendCtx) {
+            exprs.add(((cz.university.LanguageParser.FileAppendExprContext) current).right);
+            current = ((cz.university.LanguageParser.FileAppendExprContext) current).left;
+        }
+
+        SymbolTable.Type fileType = visit(current);
+        if (fileType != SymbolTable.Type.FILE) {
+            throw new RuntimeException("Left side of << must be FILE");
+        }
+
+        Collections.reverse(exprs);
+        for (ParserRuleContext arg : exprs) {
+            visit(arg);
+        }
+
+        if (!writeInstruction) {
+            instructions.add(new Instruction(Instruction.OpCode.FAPPEND_N, String.valueOf(exprs.size())));
+        } else {
+            instructions.add(new Instruction(Instruction.OpCode.FWRITE, String.valueOf(exprs.size())));
+        }
+        return SymbolTable.Type.FILE;
+    }
+
+    @Override
+    public SymbolTable.Type visitFileOpenExpr(cz.university.LanguageParser.FileOpenExprContext ctx) {
+        String filename = ctx.STRING(0).getText();
+        String mode = ctx.STRING(1).getText();
+
+        filename = filename.substring(1, filename.length() - 1);
+        mode = mode.substring(1, mode.length() - 1);
+
+        instructions.add(new Instruction(Instruction.OpCode.PUSH_S, filename));
+        instructions.add(new Instruction(Instruction.OpCode.PUSH_S, mode));
+        if (mode.equals("w")) {
+            writeInstruction = true;
+        } else if (mode.equals("a")) {
+            writeInstruction = false;
+        } else {
+            throw new RuntimeException("Invalid mode in open(): " + mode);
+        }
+        //instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+
+        return SymbolTable.Type.FILE;
+    }
 
 
+
+    private cz.university.LanguageParser.ExprContext collectFileAndValues(cz.university.LanguageParser.ExprContext expr, List<cz.university.LanguageParser.ExprContext> values) {
+        if (expr instanceof cz.university.LanguageParser.FileAppendExprContext fae) {
+            values.add(fae.right);
+            return collectFileAndValues(fae.left, values);
+        } else {
+            //it is expr which already contains file
+            return expr;
+        }
+    }
 
 
     private void addSaveInstruction(SymbolTable.Type type, String name) {
@@ -523,6 +606,10 @@ public class CodeGeneratorVisitor extends cz.university.LanguageBaseVisitor<Symb
             case FLOAT -> instructions.add(new Instruction(Instruction.OpCode.SAVE_F, name));
             case BOOL -> instructions.add(new Instruction(Instruction.OpCode.SAVE_B, name));
             case STRING -> instructions.add(new Instruction(Instruction.OpCode.SAVE_S, name));
+            case FILE -> {
+                instructions.add(new Instruction(Instruction.OpCode.FOPEN));
+                instructions.add(new Instruction(Instruction.OpCode.SAVE_FILE, name));
+            }
         }
     }
 

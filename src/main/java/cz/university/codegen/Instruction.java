@@ -16,15 +16,21 @@ public class Instruction {
         EQ_I, EQ_F, EQ_S, EQ_B,
         NOT,
         ITOF,
-        PUSH_I, PUSH_F, PUSH_S, PUSH_B,
+        PUSH_I, PUSH_F,
+        PUSH_S, PUSH_B,
         POP,
         LOAD,
-        SAVE_I, SAVE_F, SAVE_S, SAVE_B,
+        SAVE_I, SAVE_F,
+        SAVE_S, SAVE_B,
+        SAVE_FILE,
         LABEL,
         JMP,
         FJMP,
         PRINT,
-        READ_I, READ_F, READ_S, READ_B
+        READ_I, READ_F, READ_S, READ_B,
+        FOPEN,
+        FWRITE,
+        FAPPEND_N,
     }
 
     private final OpCode opCode;
@@ -58,10 +64,18 @@ public class Instruction {
             case FJMP:
                 return operand != null ? opCode.name().toLowerCase() + " " + operand : opCode.name().toLowerCase();
 
+            case FAPPEND_N:
+                return operand != null ? "fappend " + operand : "fappend";
+
+            case FWRITE:
+                return operand != null ? "fwrite " + operand : "fwrite";
+
+
             case SAVE_I:
             case SAVE_F:
             case SAVE_S:
             case SAVE_B:
+            case SAVE_FILE:
                 return "save " + operand;
 
             default:

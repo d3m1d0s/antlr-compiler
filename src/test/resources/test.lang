@@ -1,24 +1,9 @@
-if (3<4) write "condition was true";
-else write "condition was false";
-
-if (true) {
-	write "inside";
-	write "second";
-	write "if";
-}
-
-int a,b;
-
-while(a<10) {
- write "a=",a;
- a=a+1;
-}
-
-a=0;
-
-read b;
-
-while(a<b) {
- write "a=",a,", b=",b;
- a=a+1;
-}
+file f;
+f = open("SM_output_a_w.txt", "a");
+f << "Line 1" << 42;
+f = open("SM_output_a_w.txt", "w");
+f << "Overwrite";
+f = open("SM_output_w_a.txt", "w");
+f << "Overwrite" << 78;
+f = open("SM_output_w_a.txt", "a");
+f << "Next Line";

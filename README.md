@@ -45,23 +45,38 @@ This project simulates the process of creating a simple stack-based programming 
 ## 🧠 Features
 
 This compiler project supports a rich subset of imperative programming features:
+
 * **Typed language design**
+
   Includes primitive types: `int`, `float`, `bool`, `string`, and `file`.
   Supports automatic promotion from `int` to `float` in expressions.
+
 * **Comprehensive expression support**
+
   Arithmetic (`+`, `-`, `*`, `/`, `%`), logical (`&&`, `||`, `!`), comparison (`<`, `>`, `==`, `!=`), string concatenation (`.`), and file append (`<<`) operators are available with correct precedence and associativity.
+
 * **Statements and control flow**
+
   Includes variable declarations, assignments, input/output (`read`, `write`), and structured control flow via `if`, `else`, `while`, and `for`.
+
 * **Block scoping and semantic validation**
+
   Uses a symbol table and static type checker to ensure correctness at compile time, with meaningful error messages and line references.
+
 * **File I/O system**
+
   The `file` type allows working with files using simple, expressive syntax:
+
   * `f = open("file.txt", "w");` to overwrite, or `"a"` to append
   * `f << "data" << 123;` to chain file output
     These are compiled into stack-based instructions (`push`, `fwrite`, `fappend N`).
+
 * **Intermediate representation and VM**
+
   Generates stack-based code with a minimal instruction set. The virtual machine executes the code by interpreting instructions like `push`, `load`, `save`, `fappend`, `print`, `jmp`, and more.
+
 * **Modular and extensible architecture**
+
   Clean separation between the parser, type checker, code generator, and VM makes it easy to add new features, types, or constructs.
 
 ---
@@ -69,8 +84,8 @@ This compiler project supports a rich subset of imperative programming features:
 ## 📄 Language Specification (Mini-Lang)
 
 **Data types**: `int`, `float`, `bool`, `string`, `file`
-**Statements**:
 
+**Statements**:
 * Variable declarations
 * Assignments
 * Input/Output (`read`, `write`)
@@ -83,7 +98,6 @@ This compiler project supports a rich subset of imperative programming features:
 * Empty statements (`;`)
 
 **Expressions**:
-
 * Arithmetic: `+`, `-`, `*`, `/`, `%`
 * Logical: `&&`, `||`, `!`
 * Comparison: `<`, `>`, `==`, `!=`
@@ -114,7 +128,58 @@ This example appends multiple lines to the file `log.txt`, demonstrating file de
 
 ---
 
+
+
 ## 🚀 How to Build and Run
+
+### Prerequisites 
+
+* Java 17 or higher
+* Maven 3.x
+* ANTLR plugin (automatically handled by Maven)
+
+### Build the Project 
+
+In the root directory of the project, run:
+
+```bash
+mvn clean package
+```
+
+This compiles the project, generates ANTLR classes, and builds the `.jar`.
+
+### Run a Program 
+
+To compile and execute a `.lang` source file:
+
+```bash
+mvn exec:java -Dexec.mainClass=cz.university.App 
+```
+For PowerShell:
+
+```powershell
+mvn exec:java "-Dexec.mainClass=cz.university.App" 
+```
+
+This will:
+
+1. Parse the input file.
+2. Type-check it.
+3. Generate stack-based instructions into `output.out`.
+4. Execute the program via the built-in virtual machine.
+
+### Run Unit Tests 
+
+To run the included JUnit tests:
+
+```bash
+mvn test
+```
+
+Test cases are defined in `AppTest.java`, including validation of code generation and file operations.
+
+
+
 
 ---
 
@@ -164,7 +229,6 @@ AntlrCompiler/
 │
 └── pom.xml                                 # Maven build configuration
 ```
-
 ## 💬 Contact
 
 If you are interested in collaboration or have any questions, feel free to reach out.

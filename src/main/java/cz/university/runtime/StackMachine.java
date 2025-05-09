@@ -1,5 +1,10 @@
-package cz.university;
+package cz.university.runtime;
 
+import cz.university.runtime.FileHandle;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class StackMachine {
@@ -77,6 +82,15 @@ public class StackMachine {
                 case "fjmp":
                     i = fjump(parts[1], i) - 1;
                     break;
+                case "fopen":
+                    fopen();
+                    break;
+                case "fappend":
+                    fappendN(Integer.parseInt(parts[1]));
+                    break;
+                case "fwrite":
+                    fwrite(Integer.parseInt(parts[1]));
+                    break;
                 default:
                     throw new RuntimeException("Unknown instruction: " + command);
             }
@@ -104,7 +118,10 @@ public class StackMachine {
                 stack.push(Float.parseFloat(value));
                 break;
             case "S":
-                stack.push(value.substring(1, value.length() - 1));
+                if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                stack.push(value);
                 break;
             case "B":
                 stack.push(Boolean.parseBoolean(value));
@@ -331,4 +348,76 @@ public class StackMachine {
             throw new RuntimeException(errorMessage);
         }
     }
+
+    private void fopen() {
+        check(!stack.isEmpty(), "Stack underflow on FOPEN");
+
+        Object top = stack.pop();
+
+        if (stack.isEmpty()) {
+            check(top instanceof String, "FOPEN expects string filename");
+            stack.push(new FileHandle((String) top, "a"));
+        } else {
+            Object filename = stack.pop();
+            Object mode = top;
+
+            check(filename instanceof String, "FOPEN expects string filename");
+            check(mode instanceof String, "FOPEN expects string mode");
+
+            stack.push(new FileHandle((String) filename, (String) mode));
+        }
+    }
+
+    private void fappendN(int n) {
+        check(stack.size() >= n + 1, "Stack underflow on FAPPEND");
+
+        List<Object> values = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            values.add(stack.pop());
+        }
+        Collections.reverse(values);
+
+        Object handle = stack.pop();
+        check(handle instanceof FileHandle, "FAPPEND expects a FileHandle");
+
+        FileHandle fileHandle = (FileHandle) handle;
+
+        try (FileWriter fw = new FileWriter(fileHandle.getName(), true);
+             PrintWriter writer = new PrintWriter(fw)) {
+            for (Object val : values) {
+                writer.print(val);
+            }
+            writer.println();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to append to file: " + fileHandle.getName());
+        }
+    }
+
+    private void fwrite(int n) {
+        check(stack.size() >= n + 1, "Stack underflow on FWRITE");
+
+        List<Object> values = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            values.add(stack.pop());
+        }
+        Collections.reverse(values);
+
+        Object handle = stack.pop();
+        check(handle instanceof FileHandle, "FWRITE expects a FileHandle");
+
+        FileHandle fileHandle = (FileHandle) handle;
+
+        try (FileWriter fw = new FileWriter(fileHandle.getName(), false);
+             PrintWriter writer = new PrintWriter(fw)) {
+            for (Object val : values) {
+                writer.print(val);
+            }
+            writer.println();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write to file: " + fileHandle.getName());
+        }
+    }
+
+
+
 }

@@ -1,5 +1,7 @@
 package cz.university;
 
+import cz.university.codegen.CodeGeneratorVisitor;
+import cz.university.runtime.StackMachine;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
