@@ -38,7 +38,7 @@ This project simulates the process of creating a simple stack-based programming 
 | Parsing | [ANTLR 4.13.1](https://www.antlr.org/) |
 | Language | Java 17 |
 | Build System | Maven 3 |
-| Testing | Manual and example-based |
+| Testing | JUnit 4.13, Manual, Example-based |
 
 ---
 
