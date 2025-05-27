@@ -12,7 +12,7 @@ Built entirely in **Java 17** with **Maven**.
 
 ---
 
-## 📋 Project Summary
+## Project Summary
 
 This project simulates the process of creating a simple stack-based programming language from scratch. It showcases important concepts in compiler construction:
 
@@ -31,7 +31,7 @@ This project simulates the process of creating a simple stack-based programming 
 
 ---
 
-## ⚡ Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |:------|:-----------|
@@ -42,7 +42,7 @@ This project simulates the process of creating a simple stack-based programming 
 
 ---
 
-## 🧠 Features
+## Features
 
 This compiler project supports a rich subset of imperative programming features:
 
@@ -81,7 +81,7 @@ This compiler project supports a rich subset of imperative programming features:
 
 ---
 
-## 📄 Language Specification (Mini-Lang)
+## Language Specification (Mini-Lang)
 
 **Data types**: `int`, `float`, `bool`, `string`, `file`
 
@@ -109,7 +109,7 @@ This compiler project supports a rich subset of imperative programming features:
 
 ---
 
-## 📚 Example
+## Example
 
 ```c
 file f;
@@ -130,7 +130,7 @@ This example appends multiple lines to the file `log.txt`, demonstrating file de
 
 
 
-## 🚀 How to Build and Run
+## How to Build and Run
 
 ### Prerequisites 
 
@@ -183,7 +183,7 @@ Test cases are defined in `AppTest.java`, including validation of code generatio
 
 ---
 
-## 🎯 Skills Demonstrated
+## Skills Demonstrated
 
 - Grammar design and parsing (ANTLR)
 - Abstract Syntax Tree (AST) navigation (visitor pattern)
@@ -196,7 +196,7 @@ Test cases are defined in `AppTest.java`, including validation of code generatio
 
 ---
 
-## 📎 Project Structure
+## Project Structure
 
 ```
 AntlrCompiler/
@@ -229,7 +229,7 @@ AntlrCompiler/
 │
 └── pom.xml                                 # Maven build configuration
 ```
-## 💬 Contact
+## Contact
 
 If you are interested in collaboration or have any questions, feel free to reach out.
 
